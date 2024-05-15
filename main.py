@@ -71,6 +71,6 @@ def get_rankings(mode='fruits', country='PH', pages=4) -> list[dict[str, str]]:
 if __name__ == '__main__':
     # 200 pages for now
     # stress test lets gooooo
-    data = get_rankings(pages=10)
+    data = get_rankings(pages=200)
     with open('tests/data.json', 'w') as f:
         json.dump(data, f)
