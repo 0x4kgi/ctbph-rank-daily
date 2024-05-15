@@ -44,6 +44,7 @@ def get_page_rankings(url: str) -> list[dict[str, str]]:
     for data in page_data:
         # this is so gonna break
         player_data.append({
+            'rank': clean_int(data[0][1:]),
             'player': data[1],
             'accuracy': clean_float(data[6]),
             'play_count': clean_int(data[7]),
