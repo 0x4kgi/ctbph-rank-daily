@@ -56,7 +56,7 @@ def extract_data_from_rows(rows) -> list[dict[str,str]]:
         rank       = _get(tds, 'RANK', 'int')
         id, ign    = _get(tds, 'IGN', 'user')
         acc        = _get(tds, 'ACC', 'float')
-        pp         = _get(tds, 'PP', 'float')
+        pp         = _get(tds, 'PP', 'int')
         play_count = _get(tds, 'PC', 'int')
         rank_x     = _get(tds, 'X', 'int')
         rank_s     = _get(tds, 'S', 'int')
