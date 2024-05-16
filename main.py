@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests, json, time
+import requests, json, time, argparse
 
 def text(elem) -> str:
     return elem.get_text().strip()
@@ -103,7 +103,7 @@ def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
     }
 
     for page in range(int(pages)):
-        print(f'Getting page {page+1} / {pages} of the {country} {mode} leaderboards')
+        print(f'Getting page {page+1} / {pages} of the {country} {mode} leaderboard')
         page_url = f'{url}&page={page+1}'
 
         page_data = get_page_rankings(page_url)
@@ -114,11 +114,45 @@ def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
     
     return full_data
 
-if __name__ == '__main__':
-    data = get_rankings(pages=1)
+def main() -> None:
+    parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web "scraping"')
+    
+    parser.add_argument('-m', '--mode', type=str, default='0', help="What game mode to scan for. You can use owo bot's -m params or short hands like ctb, std, etc.")
+    parser.add_argument('-p', '--pages', type=int, default=1, help='Number of pages to scan, maximum of 200. Defaults to 1')
+    parser.add_argument('-c', '--country', type=str, default='PH', help="What country\'s leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
+    parser.add_argument('--test', action='store_true', help='Just do tests')
+    
+    args = parser.parse_args()
+    
+    mode = args.mode
+    pages = args.pages
+    # TODO: make a validator for this one.
+    country = args.country
+    test = args.test
+    
+    mode_map = {
+        '0': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',
+        '1': 'taiko', 'taiko': 'taiko', 'taco': 'taiko', 't': 'taiko',
+        '2': 'fruits', 'ctb': 'fruits', 'fruits': 'fruits', 'catch': 'fruits', 'c': 'fruits',
+        '3': 'mania', 'mania': 'mania', 'm': 'mania'
+    }
+    
+    mode = mode_map.get(mode)
+    if mode is None:
+        print(f'This mode: "{mode}" is not a valid one. Try again')
+        return
 
-    with open('tests/data_pretty-.json', 'w') as f:
+    if not test:
+        print('Main function not enabled yet, just do --test for now')
+        return
+    
+    data = get_rankings(mode=mode, country=country, pages=pages)
+    
+    test_file = f'tests/data_pretty-{mode}-{country}-{pages}-{time.time()}.json'
+    with open(test_file, 'w') as f:
         json.dump(data, f, separators=(',', ':'), indent=4)
+    
+    print(test_file)
 
-    with open('tests/data_mini-.json', 'w') as f:
-        json.dump(data, f, separators=(',', ':'))
+if __name__ == '__main__':
+    main()
