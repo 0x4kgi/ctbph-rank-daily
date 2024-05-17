@@ -79,8 +79,8 @@ def extract_data_from_rows(rows) -> list[dict[str,str]]:
 def get_page_rankings(url: str) -> list[dict[str, str]]:
     response = requests.get(url)
     if not response.status_code == 200:
-        print('Cant access ' + url)
-        return
+        print(f'[{response.status_code}]: Failed to gather data from {url}\n', end='\r')
+        return []
     
     soup = BeautifulSoup(response.content, 'html.parser')
     page_data = extract_data_from_rows(soup.find_all('tr'))
@@ -103,23 +103,33 @@ def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
     }
 
     for page in range(int(pages)):
-        print(f'Getting page {page+1} / {pages} of the {country} {mode} leaderboard')
+        _spage = str(page+1)
+        fill = len(str(pages))
+
+        print(f'[{country}-{mode}]: {_spage.zfill(fill)}/{pages}', end='\r')
         page_url = f'{url}&page={page+1}'
 
-        page_data = get_page_rankings(page_url)
+        fetch_start_time = time.time()
 
+        page_data = get_page_rankings(page_url)
         for data in page_data:
             uid, values = _encode_to_map(value_mapping, data, values_key)
             full_data['data'][uid] = values
+        
+        fetch_duration = time.time() - fetch_start_time
+        print(f'[{country}-{mode}]: {_spage.zfill(fill)}/{pages} [OK]: {fetch_duration:.4f}s\n', end="\r")
     
     return full_data
+
+def dump_to_file(data: list[dict[str, any]], test: bool=False) -> None:
+    pass
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web "scraping"')
     
     parser.add_argument('-m', '--mode', type=str, default='0', help="What game mode to scan for. You can use owo bot's -m params or short hands like ctb, std, etc.")
     parser.add_argument('-p', '--pages', type=int, default=1, help='Number of pages to scan, maximum of 200. Defaults to 1')
-    parser.add_argument('-c', '--country', type=str, default='PH', help="What country\'s leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
+    parser.add_argument('-c', '--country', type=str, default='PH', help="What country's leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
     parser.add_argument('--test', action='store_true', help='Just do tests')
     
     args = parser.parse_args()
