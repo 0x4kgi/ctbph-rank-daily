@@ -4,10 +4,10 @@ import requests, json, time, argparse, re
 def text(elem) -> str:
     return elem.get_text().strip()
 
-def clean_int(value: str) -> int:
+def clean_int(value:str) -> int:
     return int(value.replace(',',''))
 
-def clean_float(value: str) -> float:
+def clean_float(value:str) -> float:
     value = value.replace(',','')
     return(float(value.replace('%', '')))
 
@@ -76,7 +76,7 @@ def extract_data_from_rows(rows) -> list[dict[str,str]]:
 
     return rows_data
 
-def get_page_rankings(url: str) -> list[dict[str, str]]:
+def get_page_rankings(url:str) -> list[dict[str, str]]:
     response = requests.get(url)
     if not response.status_code == 200:
         print(f'[{response.status_code}]: Failed to gather data from {url}\n', end='\r')
@@ -87,8 +87,13 @@ def get_page_rankings(url: str) -> list[dict[str, str]]:
     
     return page_data
 
-def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
-    url = f'https://osu.ppy.sh/rankings/{mode}/performance?country={country}'
+def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str, any]]:
+    pages = min(pages, 200)
+
+    url = f'https://osu.ppy.sh/rankings/{mode}/performance'
+
+    if country:
+        url += f'?country={country}'
 
     value_mapping = ['rank', 'ign', 'pp', 'acc', 'play_count', 'rank_x', 'rank_s', 'rank_a']
     values_key = 'id'
@@ -98,6 +103,9 @@ def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
 
     full_data = {
         'update_date': time.time(),
+        'mode': mode,
+        'country': country if country else 'all',
+        'pages': pages,
         'map': value_mapping,
         'data': {},
     }
@@ -105,10 +113,13 @@ def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
     for page in range(int(pages)):
         _spage = str(page+1)
         fill = len(str(pages))
-        print(f'[{country}-{mode}]: {_spage.zfill(fill)}/{pages}', end='\r')
+        print(f'c: {country} m: {mode} c/f: {_spage.zfill(fill)}/{pages}', end='\r')
         fetch_start_time = time.time()
         
-        page_url = f'{url}&page={page+1}'
+        if country:
+            page_url = f'{url}&page={page+1}'
+        else:
+            page_url = f'{url}?page={page+1}'
         page_data = get_page_rankings(page_url)
         
         time.sleep(0.5)
@@ -118,28 +129,38 @@ def get_rankings(mode='fruits', country='PH', pages=1) -> list[dict[str, any]]:
             full_data['data'][uid] = values
         
         fetch_duration = time.time() - fetch_start_time
-        print(f'[{country}-{mode}]: {_spage.zfill(fill)}/{pages} [OK]: {fetch_duration:.4f}s\n', end="\r")
+        print(f'c: {country} m: {mode} c/f: {_spage.zfill(fill)}/{pages} OK: {fetch_duration:.4f}s\n', end="\r")
 
     return full_data
 
-def dump_to_file(data: list[dict[str, any]], test: bool=False) -> None:
-    pass
+def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=False) -> None:
+    mode = data['mode']
+    country = data['country']
+    pages = data['pages']
+
+    output = json.dumps(data, separators=(',', ':'), indent=0 if formatted else None)
+    
+    if formatted:
+        output2 = re.sub(r'(\d"):\[\s+' , r'\1:[' , output)
+        output3 = re.sub(r'("|\w),\s+'  , r'\1,'  , output2)
+        output =  re.sub(r'(\d)\s+\]'   , r'\1]'  , output3)
+
+    output_file = f'tests/data-{mode}-{country}-{pages}-{time.time()}.json'
+    with open(output_file, 'w') as json_file:
+        json_file.write(output)
+    
+    print(output_file)
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web "scraping"')
+    parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web scraping')
     
     parser.add_argument('-m', '--mode', type=str, default='0', help="What game mode to scan for. You can use owo bot's -m params or short hands like ctb, std, etc.")
     parser.add_argument('-p', '--pages', type=int, default=1, help='Number of pages to scan, maximum of 200. Defaults to 1')
-    parser.add_argument('-c', '--country', type=str, default='PH', help="What country's leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
+    parser.add_argument('-c', '--country', type=str, default=None, help="What country's leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
     parser.add_argument('--test', action='store_true', help='Just do tests')
+    parser.add_argument('--formatted', action='store_true', help='Make the output .json to be somewhat readable')
     
     args = parser.parse_args()
-    
-    mode = args.mode
-    pages = args.pages
-    # TODO: make a validator for this one.
-    country = args.country
-    test = args.test
     
     mode_map = {
         '0': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',
@@ -147,28 +168,17 @@ def main() -> None:
         '2': 'fruits', 'ctb': 'fruits', 'fruits': 'fruits', 'catch': 'fruits', 'c': 'fruits',
         '3': 'mania', 'mania': 'mania', 'm': 'mania'
     }
-    
-    mode = mode_map.get(mode)
+    mode = mode_map.get(args.mode)
     if mode is None:
-        print(f'This mode: "{mode}" is not a valid one. Try again')
+        print(f'This mode: "{args.mode}" is not a valid one. Try again')
         return
 
-    if not test:
+    if not args.test:
         print('Main function not enabled yet, just do --test for now')
         return
     
-    data = get_rankings(mode=mode, country=country, pages=pages)
-    
-    test_file = f'tests/data_pretty-{mode}-{country}-{pages}-{time.time()}.json'
-    output = json.dumps(data, separators=(',', ':'), indent=4)
-    output2 = re.sub(r'(\d"):\[\s+' , r'\1:[' , output)
-    output3 = re.sub(r'("|\w),\s+'  , r'\1,'  , output2)
-    output4 = re.sub(r'(\d)\s+\]'   , r'\1]'  , output3)
-    
-    with open(test_file, 'w') as json_file:
-        json_file.write(output4)
-    
-    print(test_file)
+    data = get_rankings(mode=mode, country=args.country, pages=args.pages)
+    dump_to_file(data, test=args.test, formatted=args.formatted)
 
 if __name__ == '__main__':
     main()
