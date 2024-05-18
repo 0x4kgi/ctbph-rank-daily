@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests, json, time, argparse, re
+import requests, json, time, argparse, re, os
 
 def text(elem) -> str:
     return elem.get_text().strip()
@@ -146,6 +146,7 @@ def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=Fals
         output =  re.sub(r'(\d)\s+\]'   , r'\1]'  , output3)
 
     output_file = f'tests/data-{mode}-{country}-{pages}-{time.time()}.json'
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, 'w') as json_file:
         json_file.write(output)
     
