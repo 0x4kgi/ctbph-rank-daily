@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from datetime import datetime
 import requests, json, time, argparse, re, os
 
 def text(elem) -> str:
@@ -133,10 +134,13 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str
 
     return full_data
 
-def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=False) -> None:
+def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=False) -> str:
     mode = data['mode']
     country = data['country']
     pages = data['pages']
+    
+    today = datetime.now()
+    date_string = today.strftime('%Y/%m/%d')
 
     output = json.dumps(data, separators=(',', ':'), indent=0 if formatted else None)
     
@@ -144,13 +148,16 @@ def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=Fals
         output2 = re.sub(r'(\d"):\[\s+' , r'\1:[' , output)
         output3 = re.sub(r'("|\w),\s+'  , r'\1,'  , output2)
         output =  re.sub(r'(\d)\s+\]'   , r'\1]'  , output3)
-
-    output_file = f'tests/data-{mode}-{country}-{pages}-{time.time()}.json'
+    
+    output_file = f'data/{date_string}/{country}-{mode}.json'
+    if test:
+        output_file = 'tests/' + output_file
+    
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, 'w') as json_file:
         json_file.write(output)
     
-    print(output_file)
+    return output_file
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web scraping')
@@ -173,13 +180,11 @@ def main() -> None:
     if mode is None:
         print(f'This mode: "{args.mode}" is not a valid one. Try again')
         return
-
-    if not args.test:
-        print('Main function not enabled yet, just do --test for now')
-        return
     
     data = get_rankings(mode=mode, country=args.country, pages=args.pages)
-    dump_to_file(data, test=args.test, formatted=args.formatted)
+    output_file = dump_to_file(data, test=args.test, formatted=args.formatted)
+    
+    print(output_file)
 
 if __name__ == '__main__':
     main()
