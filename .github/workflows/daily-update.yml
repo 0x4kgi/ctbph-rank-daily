@@ -1,4 +1,4 @@
-name: Run leaderboard scraper for osu!catch Philippines top 1000
+name: Run leaderboard scraper for osu!catch Philippines
 
 on:
   schedule:
@@ -25,6 +25,9 @@ jobs:
 
     - name: Run the scraper
       run: python leaderboard_scrape.py -m ctb -c PH -p 20 --formatted
+
+    - name: Create leaderboard page from data
+      run: python data_to_html.py
 
     - name: Commit and push changes
       run: |
