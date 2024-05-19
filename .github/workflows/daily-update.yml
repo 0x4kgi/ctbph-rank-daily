@@ -24,7 +24,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run the scraper
-      run: python main.py -m ctb -c PH -p 20 --formatted
+      run: python leaderboard_scrape.py -m ctb -c PH -p 20 --formatted
 
     - name: Commit and push changes
       run: |
