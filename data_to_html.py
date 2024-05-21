@@ -52,7 +52,13 @@ def get_data_at_date(date:str,country:str,mode:str):
         
     return data
 
-def generate_html_from_data(data:dict[str,dict], data_difference:dict[str,dict]=None, timestamp:float=0.0, test:bool=False):
+def generate_html_from_data(
+    data:dict[str,dict], 
+    data_difference:dict[str,dict] = None,
+    timestamp:float = 0.0, 
+    test:bool = False,
+    output_file:str = 'index.html',
+):
     with open('html/main-page.template.html') as file:
         html_template = file.read()
     
@@ -149,7 +155,6 @@ def generate_html_from_data(data:dict[str,dict], data_difference:dict[str,dict]=
     output = output.replace('{{__pc_gain__}}', str(pc_gain[0]))
     output = output.replace('{{__pc_name__}}', pc_gain[1])
     
-    output_file = f'index.html'
     if test:
         output_file = 'tests/' + output_file
     
@@ -161,31 +166,81 @@ def generate_html_from_data(data:dict[str,dict], data_difference:dict[str,dict]=
     
     return output_file
 
-def main(test:bool) -> None:
-    date_now = datetime.now()
-    date_yesterday = date_now - timedelta(days=1)
-    
-    now_string = date_now.strftime('%Y/%m/%d')
-    yesterday_string = date_yesterday.strftime('%Y/%m/%d')
-    
-    now_data = get_data_at_date(now_string, 'PH', 'fruits')
-    now_mapped_data = map_player_data(now_data)
-    
+def generate_page_from_dates(
+    base_date = datetime.now(),
+    compare_date_offset = 1,
+    output_file = 'index.html',
+    country = 'PH',
+    mode = 'fruits',
+    test = False,
+):
+    latest_date = base_date
+    comparison_date = latest_date - timedelta(days=compare_date_offset)
+
+    latest_string = latest_date.strftime('%Y/%m/%d')
+    comparison_string = comparison_date.strftime('%Y/%m/%d')
+
+    latest_data = get_data_at_date(latest_string, country, mode)
+
+    if latest_data is None:
+        print(f'Data for {latest_string} {country} {mode} does not exist yet. Ending early.')
+        return
+
+    latest_mapped_data = map_player_data(latest_data)
+
     data_difference = None
+
+    comparison_data = get_data_at_date(comparison_string, country, mode)
+    comparison_mapped_data = None
+
+    if comparison_data is not None:
+        comparison_mapped_data = map_player_data(comparison_data)
+        data_difference = compare_player_data(latest_mapped_data, comparison_mapped_data)
+    else:
+        print(f'Data for {comparison_string} does not exist yet. Creating nothing. Skipping generating {output_file}')
+        return
     
-    yesterday_data = get_data_at_date(yesterday_string, 'PH', 'fruits')
-    yesterday_mapped_data = None
-    
-    if yesterday_data is not None:
-        yesterday_mapped_data = map_player_data(yesterday_data)
-        data_difference = compare_player_data(now_mapped_data, yesterday_mapped_data)
-    
-    file_name = generate_html_from_data(data=now_mapped_data, data_difference=data_difference, test=test, timestamp=now_data['update_date'])
+    file_name = generate_html_from_data(
+        data=latest_mapped_data, 
+        data_difference=data_difference, 
+        test=test, 
+        timestamp=latest_data['update_date'],
+        output_file = output_file,
+    )
     
     print(file_name)
 
+def main(country:str='PH', mode:str='fruits', option:str='yesterday', test:bool=False) -> None:
+    options = {
+        # (timedelta, file_name_output)
+        'yesterday': (1, 'index.html'),
+        'week': (7, 'weekly.html'),
+        'month': (30, 'monthly.html'),
+        'year': (365, 'yearly.html'),
+
+        # TODO: compare from start of month, year, etc..
+    }
+
+    day_offset, output_file = options.get(option)
+
+    if day_offset is None:
+        print('Pick a valid option. [yesterday, week, monthly]')
+        return
+
+    generate_page_from_dates(
+        base_date=datetime.now(),
+        compare_date_offset=day_offset,
+        country=country, mode=mode, test=test,
+        output_file=output_file
+    )
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web scraping')
+    parser = argparse.ArgumentParser(description='Generate page from fetched data, requires leaderboard_scrape.py to be ran first!')
+    
+    parser.add_argument('--mode', type=str, default='fruits', help='Define what mode, uses the parameters used on osu site.')
+    parser.add_argument('--country', type=str, default='PH', help='What country to make a page from. Uses 2 letter country codes.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
+    
     args = parser.parse_args()
-    main(args.test)
+    
+    main(country=args.country, mode=args.mode, test=args.test)
