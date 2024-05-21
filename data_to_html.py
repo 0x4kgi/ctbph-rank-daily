@@ -149,20 +149,24 @@ def generate_html_from_data(
     dt_utc_plus_8 = dt_object.astimezone(utc_plus_8)
     formatted_time = dt_utc_plus_8.strftime("%Y-%m-%d %H:%M:%S")
 
-    output = html_template.replace('{{__rows__}}', rows)
-    output = output.replace('{{__updated_at__}}', formatted_time)
-    
-    output = output.replace('{{__pp_gain__}}', str(pp_gain[0]))
-    output = output.replace('{{__pp_name__}}', pp_gain[1])
-    
-    output = output.replace('{{__rank_gain__}}', str(rank_gain[0]))
-    output = output.replace('{{__rank_name__}}', rank_gain[1])
-    
-    output = output.replace('{{__pc_gain__}}', str(pc_gain[0]))
-    output = output.replace('{{__pc_name__}}', pc_gain[1])
+    replacements = {
+        'rows': rows,
+        'updated_at': formatted_time,
+        'pp_gain': pp_gain[0],
+        'pp_name': pp_gain[1],
+        'rank_gain': rank_gain[0],
+        'rank_name': rank_gain[1],
+        'pc_gain': pc_gain[0],
+        'pc_name': pc_gain[1],
+        'pp_total': pp_total,
+        'pc_total': pc_total,
+    }
 
-    output = output.replace('{{__pp_total__}}', str(pp_total))
-    output = output.replace('{{__pc_total__}}', str(pc_total))
+    for r_key in replacements:
+        token = '{{__' + r_key + '__}}'
+        html_template = html_template.replace(token, str(replacements[r_key]))
+    
+    output = html_template
     
     if test:
         output_file = 'tests/' + output_file
