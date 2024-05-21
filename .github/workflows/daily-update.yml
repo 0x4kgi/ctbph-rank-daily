@@ -2,7 +2,7 @@ name: Run leaderboard scraper for osu!catch Philippines
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 16 * * *"
   workflow_dispatch:
 
 jobs:
