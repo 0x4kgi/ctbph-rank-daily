@@ -8,7 +8,8 @@
 </head>
 <body>
   <p><h1>PH catch leaderboard changes for the day</h1></p>
-  <p>Updated at {{__updated_at__}} (UTC+0)</p>
+  <p>Updated at {{__updated_at__}} (UTC+8)</p>
+  <p><i>This should update more or less at midnight PH time :)</i></p>
 
   <p>
     Most pp gained: <b>{{__pp_name__}}</b> with {{__pp_gain__}}pp!
@@ -20,6 +21,10 @@
 
   <p>
     Most active player: <b>{{__pc_name__}}</b> with {{__pc_gain__}} plays!
+  </p>
+
+  <p>
+    Total pp and play count gains: {{__pp_total__}}pp and {{__pc_total__}} plays
   </p>
 
   <table>
@@ -34,7 +39,9 @@
       <th>S</th>
       <th>A</th>
     </tr>
+    <!-- GENERATED CODE -->
     {{__rows__}}
+    <!-- GENERATED CODE ENDS HERE-->
   </table>
 </body>
 </html>

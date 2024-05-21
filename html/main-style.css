@@ -55,3 +55,9 @@ p {
 h1 {
     text-align: center;
 }
+
+th {
+    position: sticky;
+    top: 0;
+    background-color: #222;
+}

@@ -67,6 +67,8 @@ def generate_html_from_data(
     pp_gain = (0, '')
     rank_gain = (0, '')
     pc_gain = (0, '')
+    pp_total = 0
+    pc_total = 0
     
     def _td(td):
         return f'<td>{td}</td>'
@@ -77,7 +79,7 @@ def generate_html_from_data(
         return _td(_i)
     
     def _comp(id, stat, return_change=False):
-        nonlocal pp_gain, rank_gain, pc_gain
+        nonlocal pp_gain, rank_gain, pc_gain, pp_total, pc_total
         
         if data_difference is None:
             return _td(data[id][stat])
@@ -89,6 +91,7 @@ def generate_html_from_data(
         compare = data_difference[id][stat]
         
         if stat == 'pp':
+            pp_total += compare
             if compare > pp_gain[0]:
                 pp_gain = (compare, data[id]['ign'])
         
@@ -97,6 +100,7 @@ def generate_html_from_data(
                 rank_gain = (compare, data[id]['ign'])
         
         if stat == 'play_count':
+            pc_total += compare
             if compare > pc_gain[0]:
                 pc_gain = (compare, data[id]['ign'])
         
@@ -114,9 +118,9 @@ def generate_html_from_data(
         change = f'<br><span {style}>({sign}{compare})</span>' if compare != 0 else ''
         
         if stat == 'acc':
-            return _td(f'{current:.2f}{change}')
+            return _td(f'{current:.2f}%{change}')
         else:
-            return _td(f'{current}{change}')
+            return _td(f'{current:,}{change}')
     
     for l in data:
         tr_class = ['new-entry' if data_difference[l]['new_entry'] else '']
@@ -141,8 +145,10 @@ def generate_html_from_data(
         rows += f'<tr class="{tr_class}">{rank}{pic}{ign}{pp}{acc}{pc}{x}{s}{a}</tr>\n'
     
     dt_object = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-    formatted_time = dt_object.strftime("%Y-%m-%d %H:%M:%S")
-    
+    utc_plus_8 = timezone(timedelta(hours=8))
+    dt_utc_plus_8 = dt_object.astimezone(utc_plus_8)
+    formatted_time = dt_utc_plus_8.strftime("%Y-%m-%d %H:%M:%S")
+
     output = html_template.replace('{{__rows__}}', rows)
     output = output.replace('{{__updated_at__}}', formatted_time)
     
@@ -154,6 +160,9 @@ def generate_html_from_data(
     
     output = output.replace('{{__pc_gain__}}', str(pc_gain[0]))
     output = output.replace('{{__pc_name__}}', pc_gain[1])
+
+    output = output.replace('{{__pp_total__}}', str(pp_total))
+    output = output.replace('{{__pc_total__}}', str(pc_total))
     
     if test:
         output_file = 'tests/' + output_file
