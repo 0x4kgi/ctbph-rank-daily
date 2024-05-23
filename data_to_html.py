@@ -79,8 +79,7 @@ def generate_html_from_data(
         return f'<td>{td}</td>'
     
     def _img(i):
-        _s = 50
-        _i = f'<img src="https://a.ppy.sh/{i}" loading="lazy" width={_s} height={_s}>'
+        _i = f'<img src="https://a.ppy.sh/{i}" loading="lazy">'
         return _td(_i)
     
     def _comp(id, stat, return_change=False):

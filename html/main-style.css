@@ -13,7 +13,6 @@ span.decrease {
 }
 
 table {
-
     border-collapse: collapse;
     margin: auto;
 }
@@ -25,11 +24,12 @@ table tr:hover {
 td,
 th {
     text-align: center;
-    padding: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 tr {
-    padding: 10px;
+    border-bottom: 1px #444 solid
 }
 
 tr.new-entry>td {
@@ -60,4 +60,10 @@ th {
     position: sticky;
     top: 0;
     background-color: #222;
+    padding: 10px;
+}
+
+img {
+    height: 50px;
+    width: auto;
 }
