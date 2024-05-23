@@ -11,7 +11,7 @@ def extract_data_from_rows(rows:models.Rankings) -> list[dict[str,str]]:
             'rank'      : data.country_rank,
             'id'        : data.user.id,
             'ign'       : data.user.username,
-            'pp'        : data.pp,
+            'pp'        : int(round(data.pp)),
             'acc'       : data.hit_accuracy,
             'play_count': data.play_count,
             'rank_x'    : data.grade_counts.ss + data.grade_counts.ssh,
