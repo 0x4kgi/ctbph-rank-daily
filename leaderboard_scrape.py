@@ -1,100 +1,39 @@
-from bs4 import BeautifulSoup
 from datetime import datetime
-import requests, json, time, argparse, re, os
+from dotenv import load_dotenv
+from ossapi import Ossapi, GameMode, RankingType, models
+import json, time, argparse, re, os
 
-def text(elem) -> str:
-    return elem.get_text().strip()
-
-def clean_int(value:str) -> int:
-    return int(value.replace(',',''))
-
-def clean_float(value:str) -> float:
-    value = value.replace(',','')
-    return(float(value.replace('%', '')))
-
-def extract_user_data(elem) -> tuple[str,str]:
-    # this could definitely change in the future
-    # keeping [0] as of now
-    user_a = elem.select('a.ranking-page-table__user-link-text.js-usercard')[0]
-    user_id = user_a.get('data-user-id')
-    user_name = text(user_a)
-    return user_id, user_name
-
-def extract_data_from_rows(rows) -> list[dict[str,str]]:
-    INDEX = {
-        'RANK' : 0,
-        'IGN'  : 1,
-        'ACC'  : 2,
-        'PC'   : 3,
-        'PP'   : 4,
-        'X'    : 5,
-        'S'    : 6,
-        'A'    : 7,
-    }
-    
-    def _get(source: list, index: str, mode='int'):
-        _text = text(source[INDEX[index]]).replace('#','')
-        if mode == 'int':
-            return clean_int(_text)
-        elif mode == 'float':
-            return clean_float(_text)
-        elif mode == 'user':
-            return extract_user_data(source[INDEX[index]])
-        
+def extract_data_from_rows(rows:models.Rankings) -> list[dict[str,str]]:
     rows_data = []
     
-    target_class = 'ranking-page-table__row'
-    
-    for tr in rows:
-        tr_class = tr.get('class')
-        if not tr_class:
-            continue
-        if target_class not in tr_class:
-            continue
-        
-        tds = tr.find_all('td')
-        
-        rank       = _get(tds, 'RANK', 'int')
-        id, ign    = _get(tds, 'IGN', 'user')
-        acc        = _get(tds, 'ACC', 'float')
-        pp         = _get(tds, 'PP', 'int')
-        play_count = _get(tds, 'PC', 'int')
-        rank_x     = _get(tds, 'X', 'int')
-        rank_s     = _get(tds, 'S', 'int')
-        rank_a     = _get(tds, 'A', 'int')
-
+    for data in rows.ranking:
         rows_data.append({
-            'rank'      : rank,
-            'id'        : id,
-            'ign'       : ign,
-            'pp'        : pp,
-            'acc'       : acc,
-            'play_count': play_count,
-            'rank_x'    : rank_x,
-            'rank_s'    : rank_s,
-            'rank_a'    : rank_a,
+            'rank'      : data.country_rank,
+            'id'        : data.user.id,
+            'ign'       : data.user.username,
+            'pp'        : data.pp,
+            'acc'       : data.hit_accuracy,
+            'play_count': data.play_count,
+            'rank_x'    : data.grade_counts.ss + data.grade_counts.ssh,
+            'rank_s'    : data.grade_counts.s + data.grade_counts.sh,
+            'rank_a'    : data.grade_counts.a,
         })
 
     return rows_data
 
-def get_page_rankings(url:str) -> list[dict[str, str]]:
-    response = requests.get(url)
-    if not response.status_code == 200:
-        print(f'[{response.status_code}]: Failed to gather data from {url}\n', end='\r')
-        return []
-    
-    soup = BeautifulSoup(response.content, 'html.parser')
-    page_data = extract_data_from_rows(soup.find_all('tr'))
-    
+def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> list:
+    client_id = os.getenv('OSU_CLIENT_ID')
+    client_secret = os.getenv('OSU_CLIENT_SECRET')
+
+    api = Ossapi(client_id, client_secret)
+    data = api.ranking(mode, RankingType.PERFORMANCE, country=country, cursor={'page':page})
+
+    page_data = extract_data_from_rows(data)
+
     return page_data
 
 def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str, any]]:
     pages = min(pages, 200)
-
-    url = f'https://osu.ppy.sh/rankings/{mode}/performance'
-
-    if country:
-        url += f'?country={country}'
 
     value_mapping = ['rank', 'ign', 'pp', 'acc', 'play_count', 'rank_x', 'rank_s', 'rank_a']
     values_key = 'id'
@@ -112,25 +51,16 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str
     }
 
     for page in range(int(pages)):
-        _spage = str(page+1)
-        fill = len(str(pages))
-        print(f'c: {country} m: {mode} c/f: {_spage.zfill(fill)}/{pages}', end='\r')
         fetch_start_time = time.time()
-        
-        if country:
-            page_url = f'{url}&page={page+1}'
-        else:
-            page_url = f'{url}?page={page+1}'
-        page_data = get_page_rankings(page_url)
-        
-        time.sleep(0.5)
+
+        page_data = get_page_rankings(page+1, mode, country)
         
         for data in page_data:
             uid, values = _encode_to_map(value_mapping, data, values_key)
             full_data['data'][uid] = values
         
         fetch_duration = time.time() - fetch_start_time
-        print(f'c: {country} m: {mode} c/f: {_spage.zfill(fill)}/{pages} OK: {fetch_duration:.4f}s\n', end="\r")
+        print(f'c: {country} m: {mode} c/f: {page+1}/{pages} OK: {fetch_duration:.4f}s')
 
     return full_data
 
@@ -171,7 +101,7 @@ def main() -> None:
     args = parser.parse_args()
     
     mode_map = {
-        '0': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',
+        '0': 'osu', 'osu': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',
         '1': 'taiko', 'taiko': 'taiko', 'taco': 'taiko', 't': 'taiko',
         '2': 'fruits', 'ctb': 'fruits', 'fruits': 'fruits', 'catch': 'fruits', 'c': 'fruits',
         '3': 'mania', 'mania': 'mania', 'm': 'mania'
@@ -187,4 +117,5 @@ def main() -> None:
     print(output_file)
 
 if __name__ == '__main__':
+    load_dotenv()
     main()
