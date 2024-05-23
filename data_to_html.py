@@ -43,9 +43,14 @@ def compare_player_data(today_data:dict[str,str], yesterday_data:dict[str,str]):
 
     return data
 
-def get_data_at_date(date:str,country:str,mode:str):
+def get_data_at_date(date:str,country:str,mode:str,test:bool=False):
     try:
-        with open(f'data/{date}/{country}-{mode}.json') as file:
+        target_file = f'data/{date}/{country}-{mode}.json'
+        
+        if test:
+            target_file = 'tests/' + target_file
+
+        with open(target_file) as file:
             data = json.load(file)
     except OSError as osx:
         return None
@@ -82,13 +87,13 @@ def generate_html_from_data(
         nonlocal pp_gain, rank_gain, pc_gain, pp_total, pc_total
         
         if data_difference is None:
-            return _td(data[id][stat])
+            return _td(data[id].get(stat))
         
         _green = 'class="increase"'
         _red = 'class="decrease"'
         
-        current = data[id][stat]
-        compare = data_difference[id][stat]
+        current = data[id].get(stat)
+        compare = data_difference[id].get(stat, 0)
         
         if stat == 'pp':
             pp_total += compare
@@ -110,15 +115,16 @@ def generate_html_from_data(
             elif compare < 0:
                 return 'down'
         
-        if stat == 'acc':
-            compare = round(compare, 3)
+        if stat in ['acc', 'pp']:
+            compare = round(compare, 2)
         
         sign = '+' if compare > 0 else ''
         style = _red if compare < 0 else _green
         change = f'<br><span {style}>({sign}{compare})</span>' if compare != 0 else ''
         
-        if stat == 'acc':
-            return _td(f'{current:.2f}%{change}')
+        if stat in ['acc', 'pp']:
+            pc = '%' if stat == 'acc' else ''
+            return _td(f'{current:,.2f}{pc}{change}')
         else:
             return _td(f'{current:,}{change}')
     
@@ -150,16 +156,16 @@ def generate_html_from_data(
     formatted_time = dt_utc_plus_8.strftime("%Y-%m-%d %H:%M:%S")
 
     replacements = {
-        'rows': rows,
         'updated_at': formatted_time,
-        'pp_gain': pp_gain[0],
+        'pp_gain': round(pp_gain[0]),
         'pp_name': pp_gain[1],
         'rank_gain': rank_gain[0],
         'rank_name': rank_gain[1],
         'pc_gain': pc_gain[0],
         'pc_name': pc_gain[1],
-        'pp_total': pp_total,
+        'pp_total': round(pp_total,2),
         'pc_total': pc_total,
+        'rows': rows,
     }
 
     for r_key in replacements:
@@ -193,7 +199,7 @@ def generate_page_from_dates(
     latest_string = latest_date.strftime('%Y/%m/%d')
     comparison_string = comparison_date.strftime('%Y/%m/%d')
 
-    latest_data = get_data_at_date(latest_string, country, mode)
+    latest_data = get_data_at_date(latest_string, country, mode, test)
 
     if latest_data is None:
         print(f'Data for {latest_string} {country} {mode} does not exist yet. Ending early.')
