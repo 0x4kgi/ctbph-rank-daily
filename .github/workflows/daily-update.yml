@@ -23,13 +23,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Initialize .env
-      run: |
-        echo "OSU_CLIENT_ID=${{ secrets.OSU_CLIENT_ID }}" >> .env
-        echo "OSU_CLIENT_SECRET=${{ secrets.OSU_CLIENT_SECRET }}" >> .env
-
     - name: Run the scraper
       run: python leaderboard_scrape.py -m ctb -c PH -p 20 --formatted
+      env:
+        OSU_CLIENT_ID: ${{ secrets.OSU_CLIENT_ID }}
+        OSU_CLIENT_SECRET: ${{ secrets.OSU_CLIENT_SECRET }}
 
     - name: Create leaderboard page from data
       run: python data_to_html.py
