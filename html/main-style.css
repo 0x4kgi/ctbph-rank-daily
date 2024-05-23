@@ -4,11 +4,11 @@ body {
     font-family: sans-serif;
 }
 
-span.increase {
+sup.increase {
     color: green;
 }
 
-span.decrease {
+sup.decrease {
     color: red;
 }
 

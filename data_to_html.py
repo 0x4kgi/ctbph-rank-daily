@@ -26,6 +26,7 @@ def compare_player_data(today_data:dict[str,str], yesterday_data:dict[str,str]):
         
         if y_player is None:
             data[t]['new_entry'] = True
+            continue
         
         for stat in player:
             if stat == 'ign':
@@ -119,11 +120,10 @@ def generate_html_from_data(
         
         sign = '+' if compare > 0 else ''
         style = _red if compare < 0 else _green
-        change = f'<br><span {style}>({sign}{compare})</span>' if compare != 0 else ''
+        change = f'<sup {style}>({sign}{compare})</sup>' if compare != 0 else ''
         
-        if stat in ['acc', 'pp']:
-            pc = '%' if stat == 'acc' else ''
-            return _td(f'{current:,.2f}{pc}{change}')
+        if stat in ['acc']:
+            return _td(f'{current:.2f}%{change}')
         else:
             return _td(f'{current:,}{change}')
     
