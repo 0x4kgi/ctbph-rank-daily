@@ -70,9 +70,9 @@ def generate_html_from_data(
     
     rows = ''
     
-    pp_gain = (0, '')
-    rank_gain = (0, '')
-    pc_gain = (0, '')
+    pp_gain = (0, 'nobody')
+    rank_gain = (0, 'nobody')
+    pc_gain = (0, 'nobody')
     pp_total = 0
     pc_total = 0
     
