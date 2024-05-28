@@ -257,8 +257,9 @@ if __name__ == '__main__':
     
     parser.add_argument('--mode', type=str, default='fruits', help='Define what mode, uses the parameters used on osu site.')
     parser.add_argument('--country', type=str, default='PH', help='What country to make a page from. Uses 2 letter country codes.')
+    parser.add_argument('--range', type=str, default='yesterday', help='What would be the comaparison date to be done.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
     
     args = parser.parse_args()
     
-    main(country=args.country, mode=args.mode, test=args.test)
+    main(country=args.country, mode=args.mode, option=args.range, test=args.test)
