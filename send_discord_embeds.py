@@ -1,7 +1,7 @@
 from ossapi import Ossapi, Score
 from data_to_html import get_data_at_date
 from dotenv import load_dotenv
-import os, requests
+import os, requests, math
 
 def embed_maker(
     title:str=None,
@@ -19,7 +19,16 @@ def embed_maker(
         key: value for key, value in locals().items() if value is not None
     }
 
-def get_recent_toplay_of_user(api:Ossapi, user_id, limit=5) -> Score:
+def get_pp_pb_place_from_weight(weight:float) -> int:
+    base = 0.95
+    factor = 100
+    ln_base = math.log(base)
+    ln_target = math.log(weight / factor)
+    n_minus_1 = ln_target / ln_base
+    n = n_minus_1 + 1
+    return round(n)
+
+def get_recent_top_play_of_user(api:Ossapi, user_id, limit=5) -> Score:
     data = api.user_scores(user_id, 'best', limit=limit)
 
     data.sort(key=lambda x: x.created_at, reverse=True)
@@ -92,7 +101,7 @@ def main():
     ]
 
     for u in users:
-        score = get_recent_toplay_of_user(api, u)
+        score = get_recent_top_play_of_user(api, u)
         embed = create_embed_from_play(score)
         send_embed(
             content=f'Most recent top play',
