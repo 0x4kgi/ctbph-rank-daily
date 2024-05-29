@@ -208,7 +208,7 @@ def generate_page_from_dates(
 
     data_difference = None
 
-    comparison_data = get_data_at_date(comparison_string, country, mode)
+    comparison_data = get_data_at_date(comparison_string, country, mode, test)
     comparison_mapped_data = None
 
     if comparison_data is not None:
