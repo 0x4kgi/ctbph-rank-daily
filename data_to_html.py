@@ -63,9 +63,9 @@ def generate_html_from_data(
     data_difference:dict[str,dict] = None,
     timestamp:float = 0.0, 
     test:bool = False,
-    output_file:str = 'index.html',
+    output_file:str = 'docs/index.html',
 ):
-    with open('html/main-page.template.html') as file:
+    with open('docs/main-page.template.html') as file:
         html_template = file.read()
     
     rows = ''
@@ -187,7 +187,7 @@ def generate_html_from_data(
 def generate_page_from_dates(
     base_date = datetime.now(),
     compare_date_offset = 1,
-    output_file = 'index.html',
+    output_file = 'docs/index.html',
     country = 'PH',
     mode = 'fruits',
     test = False,
@@ -231,10 +231,11 @@ def generate_page_from_dates(
 def main(country:str='PH', mode:str='fruits', option:str='yesterday', test:bool=False) -> None:
     options = {
         # (timedelta, file_name_output)
-        'yesterday': (1, 'index.html'),
-        'week': (7, 'weekly.html'),
-        'month': (30, 'monthly.html'),
-        'year': (365, 'yearly.html'),
+        # TODO: make the base dir only a single instance
+        'yesterday': (1, 'docs/index.html'),
+        'week': (7, 'docs/weekly.html'),
+        'month': (30, 'docs/monthly.html'),
+        'year': (365, 'docs/yearly.html'),
 
         # TODO: compare from start of month, year, etc..
     }
