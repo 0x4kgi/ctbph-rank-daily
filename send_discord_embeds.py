@@ -73,12 +73,14 @@ def create_embed_from_play(data:Score):
 
     return embed_data
 
-def send_embed(content:str=':)', embeds:list=[]):
+def send_embed(content:str=':)', embeds:list=[], username:str=None, avatar_url:str=None):
     webhook_url = os.getenv('WEBHOOK_URL')
 
     payload = {
-        "embeds": embeds,
-        "content": content,
+        'username': username,
+        'avatar_url': avatar_url,
+        'embeds': embeds,
+        'content': content,
     }
 
     response = requests.post(
@@ -197,29 +199,34 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     )
     
     footer = {
-        'text': 'Inaccurate? Blame @Eoneru.',
+        'text': 'Updates delivered daily at around midnight. Inaccurate? Blame Eoneru.',
     }
     
-    send_embed(None, [
-        embed_maker(
-            title='Top 5 activity rankings for <t:{}:D>'.format(int(latest_date.timestamp())),
-            description='There are: **{}** players who farmed, **{}** players who climbed the PH ranks, and **{}** players who played the game.\n\nIn __total__ there were: **{}pp**, **{} ranks**, and **{} play count** gained today! (or yesterday? idk)'.format(
-                len(pp_gainers.items()),
-                len([i for i in rank_gainers.items() if i[1]['rank'] > 0]),
-                len(active_players.items()),
-                total_pp,
-                total_rank,
-                total_pc,
+    send_embed(
+        content='``` ```',
+        embeds=[
+            embed_maker(
+                title='Top 5 activity rankings for <t:{}:D>'.format(int(latest_date.timestamp())),
+                description='There are: **{}** players who farmed, **{}** players who climbed the PH ranks, and **{}** players who played the game.\n\nIn __total__ there were: **{}pp**, **{} ranks**, and **{} play count** gained today! (or yesterday? idk)'.format(
+                    len(pp_gainers.items()),
+                    len([i for i in rank_gainers.items() if i[1]['rank'] > 0]),
+                    len(active_players.items()),
+                    total_pp,
+                    total_rank,
+                    total_pc,
+                ),
+                fields=[
+                    pp_field,
+                    rank_field,
+                    pc_field,
+                ],
+                footer=footer,
+                color=12517310
             ),
-            fields=[
-                pp_field,
-                rank_field,
-                pc_field,
-            ],
-            footer=footer,
-            color=12517310
-        ),
-    ])
+        ],
+        username='Top 1k osu!catch PH tracker',
+        avatar_url='https://iili.io/JQmQKKl.png'
+    )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate page from fetched data, requires leaderboard_scrape.py to be ran first!')
