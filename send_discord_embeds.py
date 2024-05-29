@@ -105,6 +105,51 @@ def get_sorted_list_on_stat(data:dict, stat:str, highest_first:bool=False) -> di
                 if data[i][stat] != 0
     }
 
+def generate_player_summary_fields(pp_gainers, rank_gainers, active_players, latest_data, comparison_data):
+    def format_field(name, data, formatter, stat, limit=5):
+        return {
+            'name': name,
+            'value': '\n'.join(
+                formatter(item) for item in list(data.items())[:limit] if item[1][stat] > 0
+            )
+        }
+        
+    def _uid_link(item):
+        return item[0], f'https://osu.ppy.sh/users/{item[0]}'
+
+    def _get_stats(uid, stat):
+        nonlocal latest_data, comparison_data
+        old = comparison_data[uid][stat]
+        new = latest_data[uid][stat]
+        return old, new
+    
+    def pp_formatter(item):
+        uid, link = _uid_link(item)
+        ign = item[1]['ign']
+        gained = item[1]['pp']
+        old, new = _get_stats(uid, 'pp')
+        return f'1. [**{ign}**]({link}) • {old:,}pp → **{new:,}**pp (+**{gained:,}**pp)'
+
+    def rank_formatter(item):
+        uid, link = _uid_link(item)
+        ign = item[1]['ign']
+        gained = item[1]['rank']
+        old, new = _get_stats(uid, 'rank')
+        return f'1. [**{ign}**]({link}) • PH{old:,} → PH**{new:,}** (+**{gained:,}** ranks)'
+
+    def pc_formatter(item):
+        uid, link = _uid_link(item)
+        ign = item[1]['ign']
+        gained = item[1]['play_count']
+        old, new = _get_stats(uid, 'play_count')
+        return f'1. [**{ign}**]({link}) • {old:,} → {new:,} (+**{gained:,}** plays)'
+
+    pp_field = format_field('farmers', pp_gainers, pp_formatter, 'pp')
+    rank_field = format_field('PH rank climbers', rank_gainers, rank_formatter, 'rank')
+    pc_field = format_field('"play more" gamers', active_players, pc_formatter, 'play_count')
+
+    return pp_field, rank_field, pc_field
+
 def main(country:str='PH', mode:str='fruits', test:bool=False):
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
@@ -138,31 +183,42 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     pp_gainers = get_sorted_list_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_list_on_stat(data_difference, 'rank', True)
     
-    active_fields = [
-        {
-            'name': active_players[i]['ign'],
-            'value': str(active_players[i]['play_count']) + ' play count',
-        } for i in active_players
-    ]
+    def _total_stat(data, key):
+        return sum([data[i][key] for i in data if data[i][key] > 0])
     
-    pp_fields = [
-        {
-            'name': pp_gainers[i]['ign'],
-            'value': str(pp_gainers[i]['pp']) + 'pp',
-        } for i in pp_gainers
-    ]
+    total_pc = _total_stat(active_players, 'play_count')
+    total_pp = _total_stat(pp_gainers, 'pp')
+    total_rank = _total_stat(rank_gainers, 'rank')
     
-    rank_fields = [
-        {
-            'name': rank_gainers[i]['ign'],
-            'value': str(rank_gainers[i]['rank']) + 'pp',
-        } for i in rank_gainers if rank_gainers[i]['rank'] > 0
-    ]
+    pp_field, rank_field, pc_field = generate_player_summary_fields(
+        pp_gainers, rank_gainers, active_players,
+        map_player_data(latest_data), 
+        map_player_data(comparison_data)
+    )
     
-    send_embed('active and pp gainers', [
-        embed_maker(title='rank gains', fields=rank_fields[:10]),
-        embed_maker(title='play count uwu',fields=active_fields[:10]),
-        embed_maker(title='top pp gainers for today',fields=pp_fields[:10]),
+    footer = {
+        'text': 'Inaccurate? Blame @Eoneru.',
+    }
+    
+    send_embed(None, [
+        embed_maker(
+            title='Top 5 activity rankings for <t:{}:D>'.format(int(latest_date.timestamp())),
+            description='There are: **{}** players who farmed, **{}** players who climbed the PH ranks, and **{}** players who played the game.\n\nIn __total__ there were: **{}pp**, **{} ranks**, and **{} play count** gained today! (or yesterday? idk)'.format(
+                len(pp_gainers.items()),
+                len([i for i in rank_gainers.items() if i[1]['rank'] > 0]),
+                len(active_players.items()),
+                total_pp,
+                total_rank,
+                total_pc,
+            ),
+            fields=[
+                pp_field,
+                rank_field,
+                pc_field,
+            ],
+            footer=footer,
+            color=12517310
+        ),
     ])
 
 if __name__ == '__main__':
