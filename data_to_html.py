@@ -128,8 +128,9 @@ def generate_html_from_data(
             return _td(f'{current:,}{change}')
     
     for l in data:
-        tr_class = ['new-entry' if data_difference[l]['new_entry'] else '']
-        
+        tr_class = ''
+        tr_class_list = []
+
         pic = _img(l)
         rank = _comp(l, 'rank')
         rankc = _comp(l, 'rank', True)
@@ -141,13 +142,19 @@ def generate_html_from_data(
         s = _comp(l, 'rank_s')
         a = _comp(l, 'rank_a')
         
-        if rankc == 'up':
-            tr_class.append('rank-up')
-        elif rankc == 'down':
-            tr_class.append('rank-down')
+        if data_difference[l]['new_entry']:
+            tr_class_list.append('new-entry')
         
-        tr_class = ' '.join(tr_class)
-        rows += f'<tr class="{tr_class}">{rank}{pic}{ign}{pp}{acc}{pc}{x}{s}{a}</tr>\n'
+        if rankc == 'up':
+            tr_class_list.append('rank-up')
+        elif rankc == 'down':
+            tr_class_list.append('rank-down')
+        
+        if len(tr_class_list) > 0:
+            tr_class = ' '.join(tr_class_list)
+            tr_class = f' class="{tr_class}"'
+
+        rows += f'<tr{tr_class}>{rank}{pic}{ign}{pp}{acc}{pc}{x}{s}{a}</tr>\n'
     
     dt_object = datetime.fromtimestamp(timestamp, tz=timezone.utc)
     utc_plus_8 = timezone(timedelta(hours=8))
