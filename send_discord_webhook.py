@@ -76,6 +76,10 @@ def create_embed_from_play(data:Score):
 def send_webhook(content:str=':)', embeds:list=[], username:str=None, avatar_url:str=None):
     webhook_url = os.getenv('WEBHOOK_URL')
 
+    if webhook_url is None:
+        print('No webhook url found. Not sending anything.')
+        return
+
     payload = {
         'username': username,
         'avatar_url': avatar_url,
@@ -168,6 +172,10 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         mode=mode,
         test=test,
     )
+
+    if latest_data is None:
+        print('Cannot get latest data. Ending early.')
+        return
     
     comparison_data = get_data_at_date(
         comparison_date.strftime('%Y/%m/%d'),
@@ -175,6 +183,10 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         mode=mode,
         test=test,
     )
+
+    if comparison_data is None:
+        print('No data for stat comparison found. Ending early.')
+        return
     
     data_difference = compare_player_data(
         map_player_data(latest_data),
@@ -199,7 +211,7 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     )
     
     footer = {
-        'text': 'Updates delivered daily at around midnight. Inaccurate? Blame Eoneru.',
+        'text': 'Updates delivered daily at around midnight. Inaccurate data? Blame Eoneru.',
     }
     
     send_webhook(
@@ -229,7 +241,7 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     )
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Send a Discord embed from fetched data, requires leaderboard_scrape.py to be ran first!')
+    parser = argparse.ArgumentParser(description='Send a Discord webhook message from fetched data, requires leaderboard_scrape.py to be ran first!')
     
     parser.add_argument('--mode', type=str, default='fruits', help='Define what mode, uses the parameters used on osu site.')
     parser.add_argument('--country', type=str, default='PH', help='What country to make a webhook message from. Uses 2 letter country codes.')
