@@ -32,9 +32,6 @@ jobs:
 
     - name: Create leaderboard page from data
       run: python data_to_html.py
-    
-    - name: Send discord webhook
-      run: python send_discord_webhook.py
 
     - name: Commit and push changes
       run: |
