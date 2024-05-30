@@ -11,6 +11,7 @@ jobs:
     env:
       OSU_CLIENT_ID: ${{ secrets.OSU_CLIENT_ID }}
       OSU_CLIENT_SECRET: ${{ secrets.OSU_CLIENT_SECRET }}
+      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
     steps:
     - name: Checkout
