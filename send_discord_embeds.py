@@ -73,7 +73,7 @@ def create_embed_from_play(data:Score):
 
     return embed_data
 
-def send_embed(content:str=':)', embeds:list=[], username:str=None, avatar_url:str=None):
+def send_webhook(content:str=':)', embeds:list=[], username:str=None, avatar_url:str=None):
     webhook_url = os.getenv('WEBHOOK_URL')
 
     payload = {
@@ -99,7 +99,7 @@ def sort_data_dictionary(data:dict, key:str, reversed:bool=False) -> dict:
         sorted(data.items(), key=lambda x: x[1][key], reverse=reversed)
     )
 
-def get_sorted_list_on_stat(data:dict, stat:str, highest_first:bool=False) -> dict:
+def get_sorted_dict_on_stat(data:dict, stat:str, highest_first:bool=False) -> dict:
     # this is so goofy as fuck
     return {
         i: data[i]
@@ -181,9 +181,9 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         map_player_data(comparison_data)
     )
     
-    active_players = get_sorted_list_on_stat(data_difference, 'play_count', True)
-    pp_gainers = get_sorted_list_on_stat(data_difference, 'pp', True)
-    rank_gainers = get_sorted_list_on_stat(data_difference, 'rank', True)
+    active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
+    pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
+    rank_gainers = get_sorted_dict_on_stat(data_difference, 'rank', True)
     
     def _total_stat(data, key):
         return sum([data[i][key] for i in data if data[i][key] > 0])
@@ -202,7 +202,7 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         'text': 'Updates delivered daily at around midnight. Inaccurate? Blame Eoneru.',
     }
     
-    send_embed(
+    send_webhook(
         content='``` ```',
         embeds=[
             embed_maker(
@@ -229,10 +229,10 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     )
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generate page from fetched data, requires leaderboard_scrape.py to be ran first!')
+    parser = argparse.ArgumentParser(description='Send a Discord embed from fetched data, requires leaderboard_scrape.py to be ran first!')
     
     parser.add_argument('--mode', type=str, default='fruits', help='Define what mode, uses the parameters used on osu site.')
-    parser.add_argument('--country', type=str, default='PH', help='What country to make a page from. Uses 2 letter country codes.')
+    parser.add_argument('--country', type=str, default='PH', help='What country to make a webhook message from. Uses 2 letter country codes.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
     
     args = parser.parse_args()
