@@ -26,6 +26,12 @@ def compare_player_data(today_data:dict[str,str], yesterday_data:dict[str,str]):
         
         if y_player is None:
             data[t]['new_entry'] = True
+            # temporary band-aid fix
+            for stat in player:
+                if stat == 'ign':
+                    data[t][stat] = player[stat]
+                    continue
+                data[t][stat] = 0
             continue
         
         for stat in player:

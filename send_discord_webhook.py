@@ -97,18 +97,18 @@ def send_webhook(content:str=':)', embeds:list=[], username:str=None, avatar_url
     else:
         print(f'Failed to send embed. Status code: {response.status_code}')
 
-def sort_data_dictionary(data:dict, key:str, reversed:bool=False) -> dict:
+def sort_data_dictionary(data:dict[str,dict], key:str, reversed:bool=False) -> dict:
     return dict(
         # what the fuck is this, python
-        sorted(data.items(), key=lambda x: x[1][key], reverse=reversed)
+        sorted(data.items(), key=lambda x: x[1].get(key, 0), reverse=reversed)
     )
 
-def get_sorted_dict_on_stat(data:dict, stat:str, highest_first:bool=False) -> dict:
+def get_sorted_dict_on_stat(data:dict[str,dict], stat:str, highest_first:bool=False) -> dict:
     # this is so goofy as fuck
     return {
         i: data[i]
             for i in sort_data_dictionary(data, stat, highest_first)
-                if data[i][stat] != 0
+                if data[i].get(stat, 0) != 0
     }
 
 def generate_player_summary_fields(pp_gainers, rank_gainers, active_players, latest_data, comparison_data):
