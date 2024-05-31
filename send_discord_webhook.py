@@ -218,8 +218,8 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         content='``` ```',
         embeds=[
             embed_maker(
-                title='Top 5 activity rankings for <t:{}:D>'.format(int(latest_date.timestamp())),
-                description='There are: **{}** players who farmed, **{}** players who climbed the PH ranks, and **{}** players who played the game.\n\nIn __total__ there were: **{}pp**, **{} ranks**, and **{} play count** gained today! (or yesterday? idk)'.format(
+                title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
+                description='There are: **{}** players who farmed, **{}** players who climbed the PH ranks, and **{}** players who played the game.\n\nIn __total__ there were: **{}pp**, **{} ranks**, and **{} play count** gained this day!'.format(
                     len(pp_gainers.items()),
                     len([i for i in rank_gainers.items() if i[1]['rank'] > 0]),
                     len(active_players.items()),
