@@ -150,6 +150,7 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         embeds=[
             embed_maker(
                 title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
+                url='https://0x4kgi.github.io/ctbph-rank-daily/',
                 description='There are: **{}** players who farmed, **{}** players who climbed the PH ranks, and **{}** players who played the game.\n\nIn __total__ there were: **{}pp**, **{} ranks**, and **{} play count** gained this day!'.format(
                     len(pp_gainers.items()),
                     len([i for i in rank_gainers.items() if i[1]['rank'] > 0]),
