@@ -146,8 +146,17 @@ def generate_page_from_dates(
 ):
     processed_data = get_comparison_and_mapped_data(base_date, compare_date_offset, country, mode, test)
     latest_mapped_data = processed_data[0]
+    comparison_mapped_data = processed_data[1]
     data_difference = processed_data[2]
     latest_data_timestamp = processed_data[3]
+    
+    if latest_mapped_data is None:
+        print('Cannot get latest data as of now.')
+        return
+    
+    if comparison_mapped_data is None:
+        print('Cannot get comparison data as of now.')
+        return
     
     file_name = generate_html_from_data(
         data=latest_mapped_data, 
