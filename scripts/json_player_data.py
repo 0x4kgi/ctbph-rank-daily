@@ -53,20 +53,21 @@ def get_data_at_date(date:str,country:str,mode:str,test:bool=False) -> dict[str,
     Returns:
         dict: json as dictionary none if the file does not exist yet
     """
-
+    
     current_dir = os.path.dirname(__file__)
     
-    try:
-        target_file = f'data/{date}/{country}-{mode}.json'
+    target_file = f'data/{date}/{country}-{mode}.json'
         
-        if test:
-            target_file = 'tests/' + target_file
+    if test:
+        target_file = 'tests/' + target_file
 
-        file_path = os.path.join(current_dir, '../' + target_file)
-
+    file_path = os.path.join(current_dir, '../' + target_file)
+    
+    try:
         with open(file_path) as file:
             data = json.load(file)
     except OSError as osx:
+        print(f'{file_path} does not exist.')
         return None
         
     return data

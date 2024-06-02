@@ -164,6 +164,14 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     comparison_mapped_data = processed_data[1]
     data_difference = processed_data[2]
     
+    if latest_mapped_data is None:
+        print('Cannot get latest data as of now.')
+        return
+    
+    if comparison_mapped_data is None:
+        print('Cannot get comparison data as of now.')
+        return
+    
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'rank', True)
