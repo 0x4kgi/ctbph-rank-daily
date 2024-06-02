@@ -1,24 +1,11 @@
 from ossapi import Ossapi, Score
-from data_to_html import get_data_at_date, compare_player_data, map_player_data
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import argparse, os, requests, math
 
-def embed_maker(
-    title:str=None,
-    description:str=None,
-    url:str=None,
-    color:str=None,
-    fields:list[dict[str,str]]=None,
-    author:dict[str,str]=None,
-    footer:dict[str,str]=None,
-    timestamp:str=None,
-    image:dict[str,str]=None,
-    thumbnail:dict[str,str]=None,
-):
-    return {
-        key: value for key, value in locals().items() if value is not None
-    }
+from scripts.discord_webhook import embed_maker, send_webhook
+from scripts.json_player_data import compare_player_data, get_data_at_date, get_sorted_dict_on_stat, map_player_data
+
+import argparse, os, math
 
 def get_pp_pb_place_from_weight(weight:float) -> int:
     base = 0.95
@@ -72,44 +59,6 @@ def create_embed_from_play(data:Score):
     )
 
     return embed_data
-
-def send_webhook(content:str=':)', embeds:list=[], username:str=None, avatar_url:str=None):
-    webhook_url = os.getenv('WEBHOOK_URL')
-
-    if webhook_url is None:
-        print('No webhook url found. Not sending anything.')
-        return
-
-    payload = {
-        'username': username,
-        'avatar_url': avatar_url,
-        'embeds': embeds,
-        'content': content,
-    }
-
-    response = requests.post(
-        webhook_url,
-        json=payload
-    )
-
-    if response.status_code == 204:
-        print('Embed sent successfully!')
-    else:
-        print(f'Failed to send embed. Status code: {response.status_code}')
-
-def sort_data_dictionary(data:dict[str,dict], key:str, reversed:bool=False) -> dict:
-    return dict(
-        # what the fuck is this, python
-        sorted(data.items(), key=lambda x: x[1].get(key, 0), reverse=reversed)
-    )
-
-def get_sorted_dict_on_stat(data:dict[str,dict], stat:str, highest_first:bool=False) -> dict:
-    # this is so goofy as fuck
-    return {
-        i: data[i]
-            for i in sort_data_dictionary(data, stat, highest_first)
-                if data[i].get(stat, 0) != 0
-    }
 
 def generate_player_summary_fields(pp_gainers, rank_gainers, active_players, latest_data, comparison_data):
     def format_field(name, data, formatter, stat, limit=5):
