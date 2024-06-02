@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import TypedDict, NotRequired, Optional
+from typing import TypedDict, NotRequired
 
 class EmbedAuthor(TypedDict):
     name: NotRequired[str]
@@ -20,6 +20,18 @@ class EmbedFooter(TypedDict):
 class EmbedImage(TypedDict):
     url: str
 
+class Embed(TypedDict):
+    title: str
+    description: str
+    url: str
+    color: int
+    fields: list[EmbedField]
+    author: EmbedAuthor
+    footer: EmbedFooter
+    timestamp: str
+    image: EmbedImage
+    thumbnail: EmbedImage
+
 def embed_maker(
     title:str=None,
     description:str=None,
@@ -31,14 +43,14 @@ def embed_maker(
     timestamp:str=None,
     image:EmbedImage=None,
     thumbnail:EmbedImage=None,
-) -> dict[str, list[EmbedField]|str|dict[str,str]]:
+) -> Embed:
     return {
         key: value for key, value in locals().items() if value is not None
     }
 
 def send_webhook(
     content:str=None,
-    embeds:list=[],
+    embeds:list[Embed]=[],
     username:str=None,
     avatar_url:str=None
 ):
