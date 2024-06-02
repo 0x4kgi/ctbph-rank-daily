@@ -1,68 +1,7 @@
 from datetime import datetime, timedelta, timezone
-import json, time, argparse, os
+import argparse, os
 
-def map_player_data(data:dict[str,any]) -> dict[str,dict[str,str]]:
-    decoded_data = {}
-    
-    map = data['map']
-    player_data = data['data']
-    
-    for player in player_data:
-        decoded_data[player] = {
-            map[i]: player_data[player][i] for i in range(len(map))
-        }
-    
-    return decoded_data
-
-def compare_player_data(today_data:dict[str,str], yesterday_data:dict[str,str]):
-    data = {}
-    
-    for t in today_data:
-        player = today_data.get(t)
-        y_player = yesterday_data.get(t)
-        data[t] = {
-            'new_entry': False
-        }
-        
-        if y_player is None:
-            data[t]['new_entry'] = True
-            # temporary band-aid fix
-            for stat in player:
-                if stat == 'ign':
-                    data[t][stat] = player[stat]
-                    continue
-                data[t][stat] = 0
-            continue
-        
-        for stat in player:
-            if stat == 'ign':
-                data[t][stat] = player[stat]
-                continue
-                
-            t_stat = player.get(stat, 0)
-            y_stat = y_player.get(stat, 0)
-            difference = t_stat - y_stat
-            
-            if stat == 'rank':
-                difference = 0 - difference
-            
-            data[t][stat] = difference
-
-    return data
-
-def get_data_at_date(date:str,country:str,mode:str,test:bool=False):
-    try:
-        target_file = f'data/{date}/{country}-{mode}.json'
-        
-        if test:
-            target_file = 'tests/' + target_file
-
-        with open(target_file) as file:
-            data = json.load(file)
-    except OSError as osx:
-        return None
-        
-    return data
+from scripts.json_player_data import compare_player_data, get_data_at_date, map_player_data
 
 def generate_html_from_data(
     data:dict[str,dict], 
