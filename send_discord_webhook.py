@@ -1,9 +1,15 @@
 from ossapi import Ossapi, Score
-from datetime import datetime, timedelta
+from datetime import datetime
 from dotenv import load_dotenv
 
-from scripts.discord_webhook import embed_maker, send_webhook
-from scripts.json_player_data import compare_player_data, get_data_at_date, get_sorted_dict_on_stat, map_player_data
+from scripts.discord_webhook import (
+    embed_maker,
+    send_webhook,
+)
+from scripts.json_player_data import (
+    get_comparison_and_mapped_data,
+    get_sorted_dict_on_stat,
+)
 
 import argparse, os, math
 
@@ -109,38 +115,14 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
     api = Ossapi(client_id, client_secret)
-    
+
     latest_date = datetime.now()
-    comparison_date = latest_date - timedelta(days=1)
-    
-    # this should be in a function, since i feel like im going to repeat this a lot
-    # TODO: simplify this and do the above comment, thanks
-    latest_data = get_data_at_date(
-        latest_date.strftime('%Y/%m/%d'),
-        country=country,
-        mode=mode,
-        test=test,
+    processed_data = get_comparison_and_mapped_data(
+        latest_date, 1, country, mode, test
     )
-
-    if latest_data is None:
-        print('Cannot get latest data. Ending early.')
-        return
-    
-    comparison_data = get_data_at_date(
-        comparison_date.strftime('%Y/%m/%d'),
-        country=country,
-        mode=mode,
-        test=test,
-    )
-
-    if comparison_data is None:
-        print('No data for stat comparison found. Ending early.')
-        return
-    
-    data_difference = compare_player_data(
-        map_player_data(latest_data),
-        map_player_data(comparison_data)
-    )
+    latest_mapped_data = processed_data[0]
+    comparison_mapped_data = processed_data[1]
+    data_difference = processed_data[2]
     
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
@@ -155,8 +137,8 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     
     pp_field, rank_field, pc_field = generate_player_summary_fields(
         pp_gainers, rank_gainers, active_players,
-        map_player_data(latest_data), 
-        map_player_data(comparison_data)
+        latest_mapped_data, 
+        comparison_mapped_data
     )
     
     footer = {

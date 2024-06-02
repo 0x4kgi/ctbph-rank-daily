@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import argparse, os
 
-from scripts.json_player_data import compare_player_data, get_data_at_date, map_player_data
+from scripts.json_player_data import get_comparison_and_mapped_data
 
 def generate_html_from_data(
     data:dict[str,dict], 
@@ -144,37 +144,16 @@ def generate_page_from_dates(
     mode = 'fruits',
     test = False,
 ):
-    latest_date = base_date
-    comparison_date = latest_date - timedelta(days=compare_date_offset)
-
-    latest_string = latest_date.strftime('%Y/%m/%d')
-    comparison_string = comparison_date.strftime('%Y/%m/%d')
-
-    latest_data = get_data_at_date(latest_string, country, mode, test)
-
-    if latest_data is None:
-        print(f'Data for {latest_string} {country} {mode} does not exist yet. Ending early.')
-        return
-
-    latest_mapped_data = map_player_data(latest_data)
-
-    data_difference = None
-
-    comparison_data = get_data_at_date(comparison_string, country, mode, test)
-    comparison_mapped_data = None
-
-    if comparison_data is not None:
-        comparison_mapped_data = map_player_data(comparison_data)
-        data_difference = compare_player_data(latest_mapped_data, comparison_mapped_data)
-    else:
-        print(f'Data for {comparison_string} does not exist yet. Creating nothing. Skipping generating {output_file}')
-        return
+    processed_data = get_comparison_and_mapped_data(base_date, compare_date_offset, country, mode, test)
+    latest_mapped_data = processed_data[0]
+    data_difference = processed_data[2]
+    latest_data_timestamp = processed_data[3]
     
     file_name = generate_html_from_data(
         data=latest_mapped_data, 
         data_difference=data_difference, 
         test=test, 
-        timestamp=latest_data['update_date'],
+        timestamp=latest_data_timestamp,
         output_file = output_file,
     )
     
@@ -210,7 +189,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--mode', type=str, default='fruits', help='Define what mode, uses the parameters used on osu site.')
     parser.add_argument('--country', type=str, default='PH', help='What country to make a page from. Uses 2 letter country codes.')
-    parser.add_argument('--range', type=str, default='yesterday', help='What would be the comaparison date to be done.')
+    parser.add_argument('--range', type=str, default='yesterday', help='What would be the comparison date to be done.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
     
     args = parser.parse_args()

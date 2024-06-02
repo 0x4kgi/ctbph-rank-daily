@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json, os
 
 def sort_data_dictionary(
@@ -40,8 +41,19 @@ def get_sorted_dict_on_stat(
                 if data[i].get(stat, 0) != 0
     }
 
+def get_data_at_date(date:str,country:str,mode:str,test:bool=False) -> dict[str, any]|None:
+    """Gets the json data file for the date, country, mode specified
 
-def get_data_at_date(date:str,country:str,mode:str,test:bool=False):
+    Args:
+        date (str): The date, in YYYY/MM/DD format
+        country (str): Uses 2 letter country code
+        mode (str): osu/taiko/fruits/mania
+        test (bool, optional): Uses files in tests/ to avoid cluttering up main files. Defaults to False.
+
+    Returns:
+        dict: json as dictionary none if the file does not exist yet
+    """
+
     current_dir = os.path.dirname(__file__)
     
     try:
@@ -107,3 +119,63 @@ def map_player_data(data:dict[str,any]) -> dict[str,dict[str,str]]:
         }
     
     return decoded_data
+
+def get_comparison_and_mapped_data(
+    base_date:datetime,
+    compare_date_offset:int,
+    country:str,
+    mode:str,
+    test:bool
+):
+    """Tries to compare the latest data from a specified date and older data 
+    from the offset from the latest date and maps the data to become a valid
+    json to be easily read on.
+
+    Args:
+        base_date (datetime): The datetime of the latest data to gather
+        compare_date_offset (int): How many days old compared to the latest data
+        country (str): 2 Letter country code
+        mode (str): osu/taiko/fruits/mania
+        test (bool): Use data from tests/
+
+    Returns:
+        tuple[0]: latest mapped data
+        tuple[1]: comparison mapped data
+        tuple[2]: data difference
+        tuple[3]: latest data timestamp
+        tuple[4]: comparison data timestamp
+    """
+    
+    latest_date = base_date
+    comparison_date = latest_date - timedelta(days=compare_date_offset)
+    
+    latest_data_timestamp = None
+    comparison_data_timestamp = None
+
+    latest_string = latest_date.strftime('%Y/%m/%d')
+    comparison_string = comparison_date.strftime('%Y/%m/%d')
+
+    latest_data = get_data_at_date(latest_string, country, mode, test)
+    latest_mapped_data = None
+
+    if latest_data is not None:
+        latest_data_timestamp = latest_data['update_date']
+        latest_mapped_data = map_player_data(latest_data)
+
+    data_difference = None
+
+    comparison_data = get_data_at_date(comparison_string, country, mode, test)
+    comparison_mapped_data = None
+
+    if comparison_data is not None:
+        comparison_data_timestamp = comparison_data['update_date']
+        comparison_mapped_data = map_player_data(comparison_data)
+        data_difference = compare_player_data(latest_mapped_data, comparison_mapped_data)
+    
+    return (
+        latest_mapped_data,
+        comparison_mapped_data,
+        data_difference,
+        latest_data_timestamp,
+        comparison_data_timestamp
+    )
