@@ -1,8 +1,9 @@
-from ossapi import Ossapi, Score
+from ossapi import GameMode, Ossapi, Score, User
 from datetime import datetime
 from dotenv import load_dotenv
 
 from scripts.discord_webhook import (
+    Embed,
     embed_maker,
     send_webhook,
 )
@@ -22,46 +23,63 @@ def get_pp_pb_place_from_weight(weight:float) -> int:
     n = n_minus_1 + 1
     return round(n)
 
-def get_recent_top_play_of_user(api:Ossapi, user_id, limit=5) -> Score:
-    data = api.user_scores(user_id, 'best', limit=limit)
+def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> list[Score]:
+    data = api.user_scores(user_id, type, limit=limit, mode=GameMode.CATCH)
 
-    data.sort(key=lambda x: x.created_at, reverse=True)
+    return data
 
-    return data[0]
+def get_user_info(api:Ossapi, user_id) -> User:
+    return api.user(user_id, mode=GameMode.CATCH)
 
-def create_embed_from_play(data:Score):
-    osu_username = data._user.username
-    osu_avatar = data._user.avatar_url
+def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
+    user = get_user_info(api, data.user_id)
+    
+    osu_username = user.username
+    osu_avatar = user.avatar_url
+    osu_url = f'https://osu.ppy.sh/users/{user.id}'
+    user_pp = round(user.statistics.pp,0)
+    ph_rank = user.statistics.country_rank
+
     score = data.statistics
     max_combo = data.max_combo
-    rank = str(data.rank)
+    rank = str(data.rank).split('.')[-1]
     mods = str(data.mods)
     score_time = data.created_at.strftime('%Y-%m-%dT%H:%m:%S.%fZ')
+    
 
     embed_data = embed_maker(
         title=data.beatmapset.title + f' [{data.beatmap.version}]',
-        description=f'**{rank}** {score.count_300}/{score.count_100}/{score.count_50} {max_combo}x +{mods}',
+        description=f'**{rank}** {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} {max_combo}x',
         fields=[
             {
-                "name": "Accuracy",
-                "value": str(data.accuracy * 100),
-                "inline": True,
+                'name': 'PP',
+                'value': f'{data.pp:,.2f}pp',
+                'inline': True
             },
             {
-                "name": "PP",
-                "value": str(data.pp),
-                "inline": True,
-            }
+                'name': 'Accuracy',
+                'value': f'{data.accuracy * 100:,.2f}%',
+                'inline': True
+            },
+            {
+                'name': 'Mods',
+                'value': mods,
+                'inline': True
+            },
         ],
         url=str(data.beatmap.url),
         thumbnail={
-            "url": data.beatmapset.covers.list
+            'url': data.beatmapset.covers.list
         },
         author={
-            "name": osu_username,
-            "icon_url": osu_avatar
+            'name': f'{osu_username} • {user_pp:,}pp • PH{ph_rank}',
+            'icon_url': osu_avatar,
+            'url': osu_url,
         },
         timestamp=score_time,
+        footer={
+            'text': 'Bare bones for now.... sry'
+        }
     )
 
     return embed_data
@@ -129,12 +147,12 @@ def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -
     total_rank = total_stat(rank_gainers, 'rank')
     
     # use !n for newlines
-    description = """There are: **{}** players who farmed,
-    **{}** players who climbed the PH ranks,
-    and **{}** players who played the game.!n!n
-    In __total__ there were: **{}pp**,
-    **{} ranks**,
-    and **{} play count** gained this day!""".format(
+    description = """There are: **{:,}** players who farmed,
+    **{:,}** players who climbed the PH ranks,
+    and **{:,}** players who played the game.!n!n
+    In __total__ there were: **{:,}pp**,
+    **{:,} ranks**,
+    and **{:,} play count** gained this day!""".format(
         pp_gain_count,
         rank_gain_count,
         active_count,
@@ -150,28 +168,12 @@ def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -
     
     return description
 
-
-def main(country:str='PH', mode:str='fruits', test:bool=False):
-    client_id = os.getenv('OSU_CLIENT_ID')
-    client_secret = os.getenv('OSU_CLIENT_SECRET')
-    api = Ossapi(client_id, client_secret)
-
-    latest_date = datetime.now()
-    processed_data = get_comparison_and_mapped_data(
-        latest_date, 1, country, mode, test
-    )
-    latest_mapped_data = processed_data[0]
-    comparison_mapped_data = processed_data[1]
-    data_difference = processed_data[2]
-    
-    if latest_mapped_data is None:
-        print('Cannot get latest data as of now.')
-        return
-    
-    if comparison_mapped_data is None:
-        print('Cannot get comparison data as of now.')
-        return
-    
+def send_activity_ranking_webhook(
+    latest_mapped_data:dict,
+    comparison_mapped_data:dict,
+    data_difference:dict,
+    latest_date:datetime=datetime.now(),
+) -> None:
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'rank', True)
@@ -200,6 +202,85 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         embeds=[ main_embed ],
         username='Top 1k osu!catch PH tracker',
         avatar_url='https://iili.io/JQmQKKl.png'
+    )
+
+def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timestamp, comparison_timestamp):
+    def sort_scores_by_pp(
+        scores:list[Score],
+        top=10,
+        min_date:datetime=comparison_timestamp,
+        max_date:datetime=latest_timestamp,
+    ) -> list[Score]:
+        
+        def score_filter(score:Score) -> bool:
+            timestamp = score.created_at.timestamp()
+            if timestamp < min_date:
+                return False
+            if timestamp > max_date:
+                return False
+            return True
+        
+        filtered_scores:list[Score] = filter(score_filter, scores)
+        
+        return sorted(
+            filtered_scores,
+            key=lambda s: s.pp if s.pp is not None else 0.0,
+            reverse=True
+        )[:top]
+    
+    active_players = get_sorted_dict_on_stat(data_difference, 'play_count')
+    
+    scores:list[Score] = []
+    
+    for user_id in active_players:
+        scores += get_recent_plays_of_user(
+            api=api,
+            user_id=user_id,
+            type='recent',
+            limit=active_players[user_id]['play_count']
+        )
+        print(f'uid: {user_id} OK')
+    
+    scores = sort_scores_by_pp(scores, 10)
+    
+    scr_embed = create_embed_from_play(api, scores[0])
+    send_webhook(username='Top osu!catch PH pp play of the day', embeds=[scr_embed], avatar_url='https://iili.io/JmEwJhF.png')
+
+def main(country:str='PH', mode:str='fruits', test:bool=False):
+    client_id = os.getenv('OSU_CLIENT_ID')
+    client_secret = os.getenv('OSU_CLIENT_SECRET')
+    api = Ossapi(client_id, client_secret)
+
+    latest_date = datetime.now()
+    processed_data = get_comparison_and_mapped_data(
+        latest_date, 1, country, mode, test
+    )
+    latest_mapped_data = processed_data[0]
+    comparison_mapped_data = processed_data[1]
+    data_difference = processed_data[2]
+    latest_timestamp = processed_data[3]
+    comparison_timestamp = processed_data[4]
+    
+    if latest_mapped_data is None:
+        print('Cannot get latest data as of now.')
+        return
+    
+    if comparison_mapped_data is None:
+        print('Cannot get comparison data as of now.')
+        return
+    
+    send_activity_ranking_webhook(
+        latest_mapped_data,
+        comparison_mapped_data,
+        data_difference,
+        latest_date,
+    )
+    
+    send_play_pp_ranking_webhook(
+        api,
+        data_difference,
+        latest_timestamp,
+        comparison_timestamp
     )
 
 if __name__ == '__main__':
