@@ -72,7 +72,7 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
             'url': data.beatmapset.covers.list
         },
         author={
-            'name': f'{osu_username} • {user_pp:,}pp • PH{ph_rank}',
+            'name': f'{osu_username} • {user_pp:,.0f}pp • PH{ph_rank}',
             'icon_url': osu_avatar,
             'url': osu_url,
         },
