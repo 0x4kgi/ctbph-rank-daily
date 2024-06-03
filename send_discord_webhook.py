@@ -49,7 +49,7 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
 
     embed_data = embed_maker(
         title=data.beatmapset.title + f' [{data.beatmap.version}]',
-        description=f'**{rank}** {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} {max_combo}x',
+        description=f'**{rank}** • {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} • {max_combo}x',
         fields=[
             {
                 'name': 'PP',
