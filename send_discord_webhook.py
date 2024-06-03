@@ -78,7 +78,7 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
         },
         timestamp=score_time,
         footer={
-            'text': 'Bare bones for now.... sry'
+            'text': 'It would be a miracle if you see this embed.'
         }
     )
 
