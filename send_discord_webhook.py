@@ -25,7 +25,13 @@ def get_pp_pb_place_from_weight(weight:float) -> int:
     return round(n)
 
 def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> list[Score]:
-    data = api.user_scores(user_id, type, limit=limit, mode=GameMode.CATCH)
+    data = api.user_scores(
+        user_id,
+        type,
+        limit=limit,
+        mode=GameMode.CATCH,
+        include_fails=False
+    )
 
     return data
 
@@ -294,26 +300,26 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
             api=api,
             user_id=user_id,
             type='recent',
-            limit=active_players[user_id]['play_count']
+            limit=active_players[user_id]['play_count'],
         )
         scores += user_scores
         print('  Got', len(user_scores), 'scores')
     
     scores = sort_scores_by_pp(scores, 10)
 
-    # send the highest pp play first
-    top_pp_embed = create_embed_from_play(api, scores[0])
-    send_webhook(
-        username='pp record of the day',
-        embeds=[ top_pp_embed ],
-        avatar_url='https://iili.io/JmEwJhF.png',
-    )
-
-    # then make the list of the top 10 as a separate webhook
+    # make the list of the top 10 as a separate webhook
     pp_list_embed = create_pp_record_list_embed(api, scores)
     send_webhook(
         username='top 10 pp records of the day',
         embeds=[ pp_list_embed ],
+        avatar_url='https://iili.io/JmEwJhF.png',
+    )
+    
+    # send the highest pp play
+    top_pp_embed = create_embed_from_play(api, scores[0])
+    send_webhook(
+        username='pp record of the day',
+        embeds=[ top_pp_embed ],
         avatar_url='https://iili.io/JmEwJhF.png',
     )
 
