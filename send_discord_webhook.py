@@ -25,6 +25,7 @@ def get_pp_pb_place_from_weight(weight:float) -> int:
     return round(n)
 
 def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> list[Score]:
+    print('recent plays: ', user_id, type, limit)
     data = api.user_scores(
         user_id,
         type,
@@ -32,7 +33,7 @@ def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> l
         mode=GameMode.CATCH,
         include_fails=False
     )
-
+    print('# of plays: ', len(data))
     return data
 
 def get_user_info(api:Ossapi, user_id) -> User:
@@ -226,11 +227,18 @@ def send_activity_ranking_webhook(
     )
 
 def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
-    def formatter(score:Score) -> str:
+    def formatter(index:int, score:Score) -> str:
+        def miss_format(miss) -> str:
+            if miss:
+                return f'{miss:,}❌'
+            else:
+                return '**Full Combo**'
+        
         player = get_user_info(api, score.user_id)
         
         # 1. {pp}pp - Player {playerpp} {ph rank}
-        info = '1. **{:,.2f}**pp • **{}** • {:,.0f}pp • PH{:,}\n'.format(
+        info = '{}. __**{:,.2f}**pp • **{}**__ • {:,.0f}pp • PH{:,}\n'.format(
+            index + 1,
             score.pp,
             player.username,
             player.statistics.pp,
@@ -238,7 +246,7 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
         )
 
         # map name and link also mod?
-        info += ' - [{} [{}] [{:,.2f}*]]({}) +{}\n'.format(
+        info += ' - [**{} [{}]** [{:,.2f}*]]({}) +{}\n'.format(
             score.beatmapset.title,
             score.beatmap.version,
             score.beatmap.difficulty_rating,
@@ -247,10 +255,10 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
         )
 
         # score statistics
-        info += ' - {} / {:,.2f}% / {:,} miss / {:,} combo\n'.format(
+        info += ' - {} / {:,.2f}% / {} / {:,}x\n'.format(
             get_emote_for_score_grade(score.rank),
             score.accuracy * 100,
-            score.statistics.count_miss,
+            miss_format(score.statistics.count_miss),
             score.max_combo,
         )
 
@@ -258,12 +266,15 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
 
     description:str = ''
 
-    for scr in scores:
-        description += formatter(scr)
+    for index, scr in enumerate(scores):
+        description += formatter(index, scr)
     
     return embed_maker(
         description=description,
         color=12891853,
+        footer={
+            'text': 'Only ranked submitted plays.'
+        }
     )
 
 def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timestamp, comparison_timestamp):
@@ -276,6 +287,8 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
         
         def score_filter(score:Score) -> bool:
             timestamp = score.created_at.timestamp()
+            if score.pp is None:
+                return False
             if timestamp < min_date:
                 return False
             if timestamp > max_date:
@@ -286,11 +299,15 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
         
         return sorted(
             filtered_scores,
-            key=lambda s: s.pp if s.pp is not None else 0.0,
+            key=lambda s: s.pp,
             reverse=True
         )[:top]
     
-    active_players = get_sorted_dict_on_stat(data_difference, 'play_count')
+    active_players = get_sorted_dict_on_stat(
+        data=data_difference,
+        stat='play_count',
+        highest_first=True
+    )
     
     scores:list[Score] = []
     
@@ -303,7 +320,6 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
             limit=active_players[user_id]['play_count'],
         )
         scores += user_scores
-        print('  Got', len(user_scores), 'scores')
     
     scores = sort_scores_by_pp(scores, 10)
 
