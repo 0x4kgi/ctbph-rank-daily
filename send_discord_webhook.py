@@ -318,12 +318,14 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
         )
         scores += user_scores
     
-    scores = sort_scores_by_pp(scores, 10)
+    top = 5
+    
+    scores = sort_scores_by_pp(scores, top)
 
     # make the list of the top 10 as a separate webhook
     pp_list_embed = create_pp_record_list_embed(api, scores)
     send_webhook(
-        username='top 10 pp records of the day',
+        username=f'top {top} pp records of the day',
         embeds=[ pp_list_embed ],
         avatar_url='https://iili.io/JmEwJhF.png',
     )
