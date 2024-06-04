@@ -73,6 +73,6 @@ def send_webhook(
     )
 
     if response.status_code == 204:
-        print('Embed sent successfully!')
+        print(f'Webhook sent. [[ {username} ]]')
     else:
-        print(f'Failed to send embed. Status code: {response.status_code}')
+        print(f'Failed to send webhook. Status code: {response.status_code}')
