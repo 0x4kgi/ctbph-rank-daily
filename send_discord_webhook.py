@@ -98,9 +98,6 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
             'url': osu_url,
         },
         timestamp=score_time,
-        footer={
-            'text': 'It would be a miracle if you see this embed.'
-        },
         color=16775424,
     )
 
