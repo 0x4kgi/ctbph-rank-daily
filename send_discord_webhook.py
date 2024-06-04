@@ -1,3 +1,4 @@
+import random
 from ossapi import GameMode, Ossapi, Score, User
 from datetime import datetime
 from dotenv import load_dotenv
@@ -33,6 +34,17 @@ def get_user_info(api:Ossapi, user_id) -> User:
 
 def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
     user = get_user_info(api, data.user_id)
+
+    ranks_dict = {
+        'SSH': '<:rankingXH:1247443556881399848>',
+        'SS': '<:rankingX:1247443458596274278>',
+        'SH': '<:rankingSH:1247443748695179315>',
+        'S': '<:rankingS:1247443674862845982>',
+        'A': '<:rankingA:1247443797890174986>',
+        'B': '<:rankingB:1247443846900744233>',
+        'C': '<:rankingC:1247443918711160874>',
+        'D': '<:rankingD:1247444009010331699>',
+    }
     
     osu_username = user.username
     osu_avatar = user.avatar_url
@@ -42,11 +54,10 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
 
     score = data.statistics
     max_combo = data.max_combo
-    rank = str(data.rank).split('.')[-1]
+    rank = ranks_dict[str(data.rank).split('.')[-1]]
     mods = str(data.mods)
     score_time = data.created_at.strftime('%Y-%m-%dT%H:%m:%S.%fZ')
     
-
     embed_data = embed_maker(
         title=data.beatmapset.title + f' [{data.beatmap.version}]',
         description=f'**{rank}** • {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} • {max_combo}x',
@@ -233,18 +244,31 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
     scores:list[Score] = []
     
     for user_id in active_players:
-        scores += get_recent_plays_of_user(
+        print('Fetching scores for', active_players[user_id]['ign'], '...')
+        user_scores = get_recent_plays_of_user(
             api=api,
             user_id=user_id,
             type='recent',
             limit=active_players[user_id]['play_count']
         )
-        print(f'uid: {user_id} OK')
+        scores += user_scores
+        print('  Got', len(user_scores), 'scores')
     
-    scores = sort_scores_by_pp(scores, 10)
-    
-    scr_embed = create_embed_from_play(api, scores[0])
-    send_webhook(username='Top osu!catch PH pp play of the day', embeds=[scr_embed], avatar_url='https://iili.io/JmEwJhF.png')
+    scores = sort_scores_by_pp(scores, 5)
+
+    for scr in scores:
+        print(scr._user.username, scr.pp)
+        scr_embed = create_embed_from_play(api, scr)
+        
+        # i dont like this at all
+        # but apparently discord skips some of the embeds if same author info
+        # text, url and icon, adding randomness to the url without breaking,
+        # appending url hashes at the end with random, does not solve it
+        send_webhook(
+            username='Top 5 pp plays of the day',
+            embeds=[ scr_embed ],
+            avatar_url='https://iili.io/JmEwJhF.png'
+        )
 
 def main(country:str='PH', mode:str='fruits', test:bool=False):
     client_id = os.getenv('OSU_CLIENT_ID')
