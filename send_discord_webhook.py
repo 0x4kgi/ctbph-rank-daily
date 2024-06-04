@@ -32,9 +32,7 @@ def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> l
 def get_user_info(api:Ossapi, user_id) -> User:
     return api.user(user_id, mode=GameMode.CATCH)
 
-def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
-    user = get_user_info(api, data.user_id)
-
+def get_emote_for_score_grade(grade:str) -> str:
     ranks_dict = {
         'SSH': '<:rankingXH:1247443556881399848>',
         'SS': '<:rankingX:1247443458596274278>',
@@ -45,6 +43,11 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
         'C': '<:rankingC:1247443918711160874>',
         'D': '<:rankingD:1247444009010331699>',
     }
+    grade = str(grade).split('.')[-1]
+    return ranks_dict.get(grade, '?')
+
+def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
+    user = get_user_info(api, data.user_id)
     
     osu_username = user.username
     osu_avatar = user.avatar_url
@@ -54,12 +57,12 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
 
     score = data.statistics
     max_combo = data.max_combo
-    rank = ranks_dict[str(data.rank).split('.')[-1]]
+    rank = get_emote_for_score_grade(data.rank)
     mods = str(data.mods)
     score_time = data.created_at.strftime('%Y-%m-%dT%H:%m:%S.%fZ')
     
     embed_data = embed_maker(
-        title=data.beatmapset.title + f' [{data.beatmap.version}]',
+        title=data.beatmapset.title + f' [{data.beatmap.version}] [{data.beatmap.difficulty_rating:,.2f}*]',
         description=f'**{rank}** • {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} • {max_combo}x',
         fields=[
             {
@@ -79,8 +82,8 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
             },
         ],
         url=str(data.beatmap.url),
-        thumbnail={
-            'url': data.beatmapset.covers.list
+        image={
+            'url': data.beatmapset.covers.cover
         },
         author={
             'name': f'{osu_username} • {user_pp:,.0f}pp • PH{ph_rank}',
@@ -90,12 +93,13 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
         timestamp=score_time,
         footer={
             'text': 'It would be a miracle if you see this embed.'
-        }
+        },
+        color=16775424,
     )
 
     return embed_data
 
-def generate_player_summary_fields(pp_gainers, rank_gainers, active_players, latest_data, comparison_data):
+def create_player_summary_fields(pp_gainers, rank_gainers, active_players, latest_data, comparison_data):
     def format_field(name, data, formatter, stat, limit=5):
         return {
             'name': name,
@@ -189,7 +193,7 @@ def send_activity_ranking_webhook(
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'rank', True)
     
-    pp_field, rank_field, pc_field = generate_player_summary_fields(
+    pp_field, rank_field, pc_field = create_player_summary_fields(
         pp_gainers, rank_gainers, active_players,
         latest_mapped_data, 
         comparison_mapped_data
@@ -213,6 +217,47 @@ def send_activity_ranking_webhook(
         embeds=[ main_embed ],
         username='Top 1k osu!catch PH tracker',
         avatar_url='https://iili.io/JQmQKKl.png'
+    )
+
+def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
+    def formatter(score:Score) -> str:
+        player = get_user_info(api, score.user_id)
+        
+        # 1. {pp}pp - Player {playerpp} {ph rank}
+        info = '1. **{:,.2f}**pp • **{}** • {:,.0f}pp • PH{:,}\n'.format(
+            score.pp,
+            player.username,
+            player.statistics.pp,
+            player.statistics.country_rank,
+        )
+
+        # map name and link also mod?
+        info += ' - [{} [{}] [{:,.2f}*]]({}) +{}\n'.format(
+            score.beatmapset.title,
+            score.beatmap.version,
+            score.beatmap.difficulty_rating,
+            score.beatmap.url,
+            score.mods,
+        )
+
+        # score statistics
+        info += ' - {} / {:,.2f}% / {:,} miss / {:,} combo\n'.format(
+            get_emote_for_score_grade(score.rank),
+            score.accuracy * 100,
+            score.statistics.count_miss,
+            score.max_combo,
+        )
+
+        return info
+
+    description:str = ''
+
+    for scr in scores:
+        description += formatter(scr)
+    
+    return embed_maker(
+        description=description,
+        color=12891853,
     )
 
 def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timestamp, comparison_timestamp):
@@ -254,21 +299,23 @@ def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timest
         scores += user_scores
         print('  Got', len(user_scores), 'scores')
     
-    scores = sort_scores_by_pp(scores, 5)
+    scores = sort_scores_by_pp(scores, 10)
 
-    for scr in scores:
-        print(scr._user.username, scr.pp)
-        scr_embed = create_embed_from_play(api, scr)
-        
-        # i dont like this at all
-        # but apparently discord skips some of the embeds if same author info
-        # text, url and icon, adding randomness to the url without breaking,
-        # appending url hashes at the end with random, does not solve it
-        send_webhook(
-            username='Top 5 pp plays of the day',
-            embeds=[ scr_embed ],
-            avatar_url='https://iili.io/JmEwJhF.png'
-        )
+    # send the highest pp play first
+    top_pp_embed = create_embed_from_play(api, scores[0])
+    send_webhook(
+        username='pp record of the day',
+        embeds=[ top_pp_embed ],
+        avatar_url='https://iili.io/JmEwJhF.png',
+    )
+
+    # then make the list of the top 10 as a separate webhook
+    pp_list_embed = create_pp_record_list_embed(api, scores)
+    send_webhook(
+        username='top 10 pp records of the day',
+        embeds=[ pp_list_embed ],
+        avatar_url='https://iili.io/JmEwJhF.png',
+    )
 
 def main(country:str='PH', mode:str='fruits', test:bool=False):
     client_id = os.getenv('OSU_CLIENT_ID')
