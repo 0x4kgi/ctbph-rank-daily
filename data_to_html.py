@@ -9,7 +9,7 @@ def generate_html_from_data(
     timestamp:float = 0.0, 
     test:bool = False,
     output_file:str = 'docs/index.html',
-):
+) -> str:
     with open('docs/main-page.template.html') as file:
         html_template = file.read()
     
@@ -143,12 +143,12 @@ def generate_page_from_dates(
     country = 'PH',
     mode = 'fruits',
     test = False,
-):
+) -> None:
     processed_data = get_comparison_and_mapped_data(base_date, compare_date_offset, country, mode, test)
-    latest_mapped_data = processed_data[0]
-    comparison_mapped_data = processed_data[1]
-    data_difference = processed_data[2]
-    latest_data_timestamp = processed_data[3]
+    latest_mapped_data = processed_data.latest_mapped_data
+    comparison_mapped_data = processed_data.comparison_mapped_data
+    data_difference = processed_data.data_difference
+    latest_data_timestamp = processed_data.latest_data_timestamp
     
     if latest_mapped_data is None:
         print('Cannot get latest data as of now.')
