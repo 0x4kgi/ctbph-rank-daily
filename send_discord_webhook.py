@@ -2,9 +2,11 @@ import random
 from ossapi import GameMode, Ossapi, Score, User
 from datetime import datetime
 from dotenv import load_dotenv
+from typing import TypedDict, NotRequired
 
 from scripts.discord_webhook import (
     Embed,
+    EmbedField,
     embed_maker,
     send_webhook,
 )
@@ -103,8 +105,14 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
 
     return embed_data
 
-def create_player_summary_fields(pp_gainers, rank_gainers, active_players, latest_data, comparison_data):
-    def format_field(name, data, formatter, stat, limit=5):
+def create_player_summary_fields(
+    pp_gainers,
+    rank_gainers,
+    active_players,
+    latest_data,
+    comparison_data
+) -> tuple[EmbedField, EmbedField, EmbedField]:
+    def format_field(name, data, formatter, stat, limit=5) -> EmbedField:
         return {
             'name': name,
             'value': '\n'.join(
@@ -347,11 +355,11 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     processed_data = get_comparison_and_mapped_data(
         latest_date, 1, country, mode, test
     )
-    latest_mapped_data = processed_data[0]
-    comparison_mapped_data = processed_data[1]
-    data_difference = processed_data[2]
-    latest_timestamp = processed_data[3]
-    comparison_timestamp = processed_data[4]
+    latest_mapped_data = processed_data.latest_mapped_data
+    comparison_mapped_data = processed_data.comparison_mapped_data
+    data_difference = processed_data.data_difference
+    latest_timestamp = processed_data.latest_data_timestamp
+    comparison_timestamp = processed_data.comparison_data_timestamp
     
     if latest_mapped_data is None:
         print('Cannot get latest data as of now.')

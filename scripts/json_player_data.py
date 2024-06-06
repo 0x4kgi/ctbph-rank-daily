@@ -1,11 +1,28 @@
+from collections import namedtuple
 from datetime import datetime, timedelta
+from typing import TypedDict
 import json, os
 
+class MappedPlayerData(TypedDict):
+    rank: int
+    ign: str
+    pp: float
+    acc: float
+    play_count: int
+    rank_x: int
+    rank_s: int
+    rank_a: int
+
+class RawPlayerData(TypedDict):
+    update_date: float
+    map: list[str]
+    data: dict[str, list[int | str | float]]
+
 def sort_data_dictionary(
-    data:dict[str,dict],
+    data:MappedPlayerData,
     key:str,
     reversed:bool=False
-) -> dict[str, dict[str, str|int|float]]:
+) -> MappedPlayerData:
     """Sorts mapped player data. 
 
     Args:
@@ -21,10 +38,10 @@ def sort_data_dictionary(
     )
 
 def get_sorted_dict_on_stat(
-    data:dict[str,dict],
+    data:MappedPlayerData,
     stat:str,
     highest_first:bool=False
-) -> dict[str, dict[str, str|int|float]]:
+) -> MappedPlayerData:
     """Sorts mapped player data and removes 0 values.
 
     Args:
@@ -37,11 +54,16 @@ def get_sorted_dict_on_stat(
     """
     return {
         i: data[i]
-            for i in sort_data_dictionary(data, stat, highest_first)
-                if data[i].get(stat, 0) != 0
+        for i in sort_data_dictionary(data, stat, highest_first)
+        if data[i].get(stat, 0) != 0
     }
 
-def get_data_at_date(date:str,country:str,mode:str,test:bool=False) -> dict[str, any]|None:
+def get_data_at_date(
+    date:str,
+    country:str,
+    mode:str,
+    test:bool=False
+) -> RawPlayerData|None:
     """Gets the json data file for the date, country, mode specified
 
     Args:
@@ -72,7 +94,10 @@ def get_data_at_date(date:str,country:str,mode:str,test:bool=False) -> dict[str,
         
     return data
 
-def compare_player_data(today_data:dict[str,str], yesterday_data:dict[str,str]):
+def compare_player_data(
+    today_data:MappedPlayerData,
+    yesterday_data:MappedPlayerData
+) -> MappedPlayerData:
     data = {}
     
     for t in today_data:
@@ -108,18 +133,30 @@ def compare_player_data(today_data:dict[str,str], yesterday_data:dict[str,str]):
 
     return data
 
-def map_player_data(data:dict[str,any]) -> dict[str,dict[str,str]]:
-    decoded_data = {}
+def map_player_data(data:RawPlayerData) -> MappedPlayerData:
+    decoded_data:MappedPlayerData = {}
     
     map = data['map']
     player_data = data['data']
     
     for player in player_data:
         decoded_data[player] = {
-            map[i]: player_data[player][i] for i in range(len(map))
+            map[i]: player_data[player][i] 
+            for i in range(len(map))
         }
     
     return decoded_data
+
+ComparisonAndMappedData = namedtuple(
+    typename='ComparisonAndMappedData',
+    field_names=[
+        'latest_mapped_data',
+        'comparison_mapped_data',
+        'data_difference',
+        'latest_data_timestamp',
+        'comparison_data_timestamp',
+    ]
+)
 
 def get_comparison_and_mapped_data(
     base_date:datetime,
@@ -127,7 +164,7 @@ def get_comparison_and_mapped_data(
     country:str,
     mode:str,
     test:bool
-):
+) -> ComparisonAndMappedData:
     """Tries to compare the latest data from a specified date and older data 
     from the offset from the latest date and maps the data to become a valid
     json to be easily read on.
@@ -173,10 +210,10 @@ def get_comparison_and_mapped_data(
         comparison_mapped_data = map_player_data(comparison_data)
         data_difference = compare_player_data(latest_mapped_data, comparison_mapped_data)
     
-    return (
-        latest_mapped_data,
-        comparison_mapped_data,
-        data_difference,
-        latest_data_timestamp,
-        comparison_data_timestamp
+    return ComparisonAndMappedData(
+        latest_mapped_data=latest_mapped_data,
+        comparison_mapped_data=comparison_mapped_data,
+        data_difference=data_difference,
+        latest_data_timestamp=latest_data_timestamp,
+        comparison_data_timestamp=comparison_data_timestamp
     )
