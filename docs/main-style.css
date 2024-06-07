@@ -1,19 +1,12 @@
 body {
     background-color: #222;
     color: white;
-    font-family: sans-serif;
-}
-
-sup.increase {
-    color: green;
-}
-
-sup.decrease {
-    color: red;
+    font-family: monospace;
 }
 
 table {
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0px 5px;
     margin: auto;
 }
 
@@ -30,6 +23,22 @@ th {
 
 tr {
     border-bottom: 1px #444 solid
+}
+
+td:nth-child(2) {
+    text-align: right;
+} 
+
+td:nth-child(3) {
+    text-align: left;
+} 
+
+sup.increase {
+    color: green;
+}
+
+sup.decrease {
+    color: red;
 }
 
 tr.new-entry>td {
@@ -64,6 +73,6 @@ th {
 }
 
 img {
-    height: 50px;
+    height: 30px;
     width: auto;
 }
