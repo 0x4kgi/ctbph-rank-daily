@@ -205,7 +205,7 @@ def get_comparison_and_mapped_data(
     comparison_data = get_data_at_date(comparison_string, country, mode, test)
     comparison_mapped_data = None
 
-    if comparison_data is not None:
+    if comparison_data is not None and latest_data is not None:
         comparison_data_timestamp = comparison_data['update_date']
         comparison_mapped_data = map_player_data(comparison_data)
         data_difference = compare_player_data(latest_mapped_data, comparison_mapped_data)
