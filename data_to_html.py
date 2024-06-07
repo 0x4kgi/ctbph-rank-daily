@@ -180,7 +180,7 @@ def main(country:str='PH', mode:str='fruits', option:str='yesterday', test:bool=
         # TODO: compare from start of month, year, etc..
     }
 
-    day_offset, output_file = options.get(option)
+    day_offset, output_file = options.get(option, None)
 
     if day_offset is None:
         print('Pick a valid option. [yesterday, week, monthly]')
