@@ -238,16 +238,12 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
                 return f'{miss:,}❌'
             else:
                 return '**Full Combo**'
-        
-        player = get_user_info(api, score.user_id)
-        
-        # 1. {pp}pp - Player {playerpp} {ph rank}
-        info = '{}. __**{:,.2f}**pp • **{}**__ • {:,.0f}pp • PH{:,}\n'.format(
+
+        # 1. {pp}pp - Player
+        info = '{}. **{:,.2f}**pp • **{}**\n'.format(
             index + 1,
             score.pp,
-            player.username,
-            player.statistics.pp,
-            player.statistics.country_rank,
+            score._user.username,
         )
 
         # map name and link also mod?
