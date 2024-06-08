@@ -13,16 +13,19 @@ class MappedPlayerData(TypedDict):
     rank_s: int
     rank_a: int
 
-class RawPlayerData(TypedDict):
+class MappedPlayerDataCollection(TypedDict):
+    data: dict[str, MappedPlayerData]
+
+class RawPlayerDataCollection(TypedDict):
     update_date: float
     map: list[str]
     data: dict[str, list[int | str | float]]
 
 def sort_data_dictionary(
-    data:MappedPlayerData,
+    data:MappedPlayerDataCollection,
     key:str,
     reversed:bool=False
-) -> MappedPlayerData:
+) -> MappedPlayerDataCollection:
     """Sorts mapped player data. 
 
     Args:
@@ -38,10 +41,10 @@ def sort_data_dictionary(
     )
 
 def get_sorted_dict_on_stat(
-    data:MappedPlayerData,
+    data:MappedPlayerDataCollection,
     stat:str,
     highest_first:bool=False
-) -> MappedPlayerData:
+) -> MappedPlayerDataCollection:
     """Sorts mapped player data and removes 0 values.
 
     Args:
@@ -63,7 +66,7 @@ def get_data_at_date(
     country:str,
     mode:str,
     test:bool=False
-) -> RawPlayerData|None:
+) -> RawPlayerDataCollection|None:
     """Gets the json data file for the date, country, mode specified
 
     Args:
@@ -95,9 +98,9 @@ def get_data_at_date(
     return data
 
 def compare_player_data(
-    today_data:MappedPlayerData,
-    yesterday_data:MappedPlayerData
-) -> MappedPlayerData:
+    today_data:MappedPlayerDataCollection,
+    yesterday_data:MappedPlayerDataCollection
+) -> MappedPlayerDataCollection:
     data = {}
     
     for t in today_data:
@@ -133,8 +136,8 @@ def compare_player_data(
 
     return data
 
-def map_player_data(data:RawPlayerData) -> MappedPlayerData:
-    decoded_data:MappedPlayerData = {}
+def map_player_data(data:RawPlayerDataCollection) -> MappedPlayerDataCollection:
+    decoded_data:MappedPlayerDataCollection = {}
     
     map = data['map']
     player_data = data['data']
