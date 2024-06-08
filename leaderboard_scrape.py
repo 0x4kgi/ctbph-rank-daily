@@ -8,15 +8,20 @@ def extract_data_from_rows(rows:models.Rankings) -> list[dict[str,str]]:
     
     for data in rows.ranking:
         rows_data.append({
-            'rank'      : data.country_rank,
-            'id'        : data.user.id,
-            'ign'       : data.user.username,
-            'pp'        : int(round(data.pp)),
-            'acc'       : data.hit_accuracy,
-            'play_count': data.play_count,
-            'rank_x'    : data.grade_counts.ss + data.grade_counts.ssh,
-            'rank_s'    : data.grade_counts.s + data.grade_counts.sh,
-            'rank_a'    : data.grade_counts.a,
+            'country_rank': data.country_rank,
+            'global_rank' : data.global_rank,
+            'id'          : data.user.id,
+            'ign'         : data.user.username,
+            'pp'          : int(round(data.pp)),
+            'acc'         : data.hit_accuracy,
+            'play_count'  : data.play_count,
+            'rank_x'      : data.grade_counts.ss + data.grade_counts.ssh,
+            'rank_s'      : data.grade_counts.s + data.grade_counts.sh,
+            'rank_a'      : data.grade_counts.a,
+            'play_time'   : data.play_time,
+            'total_score' : data.total_score,
+            'ranked_score': data.ranked_score,
+            'total_hits'  : data.total_hits,
         })
 
     return rows_data
@@ -35,7 +40,21 @@ def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> li
 def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str, any]]:
     pages = min(pages, 200)
 
-    value_mapping = ['rank', 'ign', 'pp', 'acc', 'play_count', 'rank_x', 'rank_s', 'rank_a']
+    value_mapping = [
+        'country_rank',
+        'global_rank',
+        'ign',
+        'pp',
+        'acc',
+        'play_count',
+        'rank_x',
+        'rank_s',
+        'rank_a',
+        'play_time',
+        'total_score',
+        'ranked_score',
+        'total_hits',
+    ]
     values_key = 'id'
 
     def _encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[any]]:

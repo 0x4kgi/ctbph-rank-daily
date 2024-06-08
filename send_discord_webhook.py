@@ -139,8 +139,8 @@ def create_player_summary_fields(
     def rank_formatter(item):
         uid, link = _uid_link(item)
         ign = item[1]['ign']
-        gained = item[1]['rank']
-        old, new = _get_stats(uid, 'rank')
+        gained = item[1]['country_rank']
+        old, new = _get_stats(uid, 'country_rank')
         return f'1. [**{ign}**]({link}) • PH{old:,} → PH**{new:,}** (+**{gained:,}** ranks)'
 
     def pc_formatter(item):
@@ -151,7 +151,7 @@ def create_player_summary_fields(
         return f'1. [**{ign}**]({link}) • {old:,} → {new:,} (+**{gained:,}** plays)'
 
     pp_field = format_field('farmers', pp_gainers, pp_formatter, 'pp')
-    rank_field = format_field('PH rank climbers', rank_gainers, rank_formatter, 'rank')
+    rank_field = format_field('PH rank climbers', rank_gainers, rank_formatter, 'country_rank')
     pc_field = format_field('"play more" gamers', active_players, pc_formatter, 'play_count')
 
     return pp_field, rank_field, pc_field
@@ -167,11 +167,11 @@ def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -
     
     active_count = above_zero_count(active_players, 'play_count')
     pp_gain_count = above_zero_count(pp_gainers, 'pp')
-    rank_gain_count = above_zero_count(rank_gainers, 'rank')
+    rank_gain_count = above_zero_count(rank_gainers, 'country_rank')
     
     total_pc = total_stat(active_players, 'play_count')
     total_pp = total_stat(pp_gainers, 'pp')
-    total_rank = total_stat(rank_gainers, 'rank')
+    total_rank = total_stat(rank_gainers, 'country_rank')
     
     # use !n for newlines
     description = """There are: **{:,}** players who farmed,
@@ -203,7 +203,7 @@ def send_activity_ranking_webhook(
 ) -> None:
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
-    rank_gainers = get_sorted_dict_on_stat(data_difference, 'rank', True)
+    rank_gainers = get_sorted_dict_on_stat(data_difference, 'country_rank', True)
     
     pp_field, rank_field, pc_field = create_player_summary_fields(
         pp_gainers, rank_gainers, active_players,

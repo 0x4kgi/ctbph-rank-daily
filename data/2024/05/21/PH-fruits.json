@@ -1,6 +1,6 @@
 {
 "update_date":1716307729.7970653,"mode":"fruits","country":"PH","pages":20,"map":[
-"rank","ign","pp","acc","play_count","rank_x","rank_s","rank_a"
+"country_rank","ign","pp","acc","play_count","rank_x","rank_s","rank_a"
 ],
 "data":{
 "829284":[1,"Bunnrei",21019,99.9,151413,858,1707,123],
