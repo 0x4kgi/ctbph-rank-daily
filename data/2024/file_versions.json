@@ -1,0 +1,27 @@
+{
+    "0": {
+        "initial": "2024/05/18",
+        "description": "Initial file version of the json file, it just includes country_rank, ign, pp, acc, play count, rank ss, rank s, and rank a",
+        "schema": {
+            "update_date": "float",
+            "mode": "str",
+            "country": "str",
+            "pages": "int",
+            "map": "list[str]",
+            "data": "dict[str,list[any]]"
+        }
+    },
+    "1": {
+        "initial": "2024/06/08",
+        "description": "Added global ranks, play time, total score, ranked score, and total hits",
+        "schema": {
+            "file_version": "int",
+            "update_date": "float",
+            "mode": "str",
+            "country": "str",
+            "pages": "int",
+            "map": "list[str]",
+            "data": "dict[str,list[any]]"
+        }
+    }
+}
