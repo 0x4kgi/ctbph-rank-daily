@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 from dotenv import load_dotenv
 from ossapi import Ossapi, GameMode, RankingType, models
 import json, time, argparse, re, os
@@ -60,7 +59,7 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> RawPlayerData
     ]
     values_key = 'id'
 
-    def _encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[Any]]:
+    def _encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[any]]:
         return data[key], [data[index] for index in map]
 
     full_data:RawPlayerDataCollection = {
