@@ -61,6 +61,9 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str
         return data[key], [data[index] for index in map]
 
     full_data = {
+        # INFO: increment by one every time you change the format of the
+        #       resulting json file and change data/file_versions.json too
+        'file_version': 1,
         'update_date': time.time(),
         'mode': mode,
         'country': country if country else 'all',
