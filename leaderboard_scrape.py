@@ -111,9 +111,9 @@ def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=Fals
 def main() -> None:
     parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web scraping')
     
-    parser.add_argument('-m', '--mode', type=str, default='0', help="What game mode to scan for. You can use owo bot's -m params or short hands like ctb, std, etc.")
-    parser.add_argument('-p', '--pages', type=int, default=1, help='Number of pages to scan, maximum of 200. Defaults to 1')
-    parser.add_argument('-c', '--country', type=str, default=None, help="What country's leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
+    parser.add_argument('-m', '--mode', type=str, default='2', help="What game mode to scan for. You can use owo bot's -m params or short hands like ctb, std, etc.")
+    parser.add_argument('-p', '--pages', type=int, default=20, help='Number of pages to scan, maximum of 200. Defaults to 1')
+    parser.add_argument('-c', '--country', type=str, default='PH', help="What country's leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
     parser.add_argument('--test', action='store_true', help='Just do tests')
     parser.add_argument('--formatted', action='store_true', help='Make the output .json to be somewhat readable')
     
