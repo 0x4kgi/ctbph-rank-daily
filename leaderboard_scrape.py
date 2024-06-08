@@ -1,10 +1,13 @@
 from datetime import datetime
+from typing import Any
 from dotenv import load_dotenv
 from ossapi import Ossapi, GameMode, RankingType, models
 import json, time, argparse, re, os
 
-def extract_data_from_rows(rows:models.Rankings) -> list[dict[str,str]]:
-    rows_data = []
+from scripts.json_player_data import MappedPlayerData, MappedPlayerDataCollection, RawPlayerDataCollection
+
+def extract_data_from_rows(rows:models.Rankings) -> list[MappedPlayerData]:
+    rows_data:list[MappedPlayerData] = []
     
     for data in rows.ranking:
         rows_data.append({
@@ -26,7 +29,7 @@ def extract_data_from_rows(rows:models.Rankings) -> list[dict[str,str]]:
 
     return rows_data
 
-def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> list:
+def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> list[MappedPlayerData]:
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
 
@@ -37,7 +40,7 @@ def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> li
 
     return page_data
 
-def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str, any]]:
+def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> RawPlayerDataCollection:
     pages = min(pages, 200)
 
     value_mapping = [
@@ -57,10 +60,10 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str
     ]
     values_key = 'id'
 
-    def _encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[any]]:
+    def _encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[Any]]:
         return data[key], [data[index] for index in map]
 
-    full_data = {
+    full_data:RawPlayerDataCollection = {
         # INFO: increment by one every time you change the format of the
         #       resulting json file and change data/file_versions.json too
         'file_version': 1,
@@ -86,7 +89,7 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> list[dict[str
 
     return full_data
 
-def dump_to_file(data:list[dict[str, any]], test:bool=False, formatted:bool=False) -> str:
+def dump_to_file(data:RawPlayerDataCollection, test:bool=False, formatted:bool=False) -> str:
     mode = data['mode']
     country = data['country']
     pages = data['pages']
@@ -134,7 +137,7 @@ def main() -> None:
         return
     
     data = get_rankings(mode=mode, country=args.country, pages=args.pages)
-    output_file = dump_to_file(data, test=args.test, formatted=args.formatted)
+    output_file = dump_to_file(data=data, test=args.test, formatted=args.formatted)
     
     print(output_file)
 

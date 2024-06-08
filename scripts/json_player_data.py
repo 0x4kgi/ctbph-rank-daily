@@ -1,10 +1,13 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import TypedDict
+from typing import Optional, TypedDict
 import json, os
 
 class MappedPlayerData(TypedDict):
-    rank: int
+    """Object for player data
+    ```
+    county_rank: int
+    global_rank: int
     ign: str
     pp: float
     acc: float
@@ -12,12 +15,60 @@ class MappedPlayerData(TypedDict):
     rank_x: int
     rank_s: int
     rank_a: int
+    play_time: int
+    total_score: int
+    ranked_score: int
+    total_hits: int
+    ```
+    """
+    county_rank: int
+    global_rank: int
+    ign: str
+    pp: float
+    acc: float
+    play_count: int
+    rank_x: int
+    rank_s: int
+    rank_a: int
+    play_time: int
+    total_score: int
+    ranked_score: int
+    total_hits: int
 
 class MappedPlayerDataCollection(TypedDict):
-    data: dict[str, MappedPlayerData]
+    """A collection of player data that includes the player id
+    
+    Mapped as follows:
+    ```
+    {
+        user_id1: MappedPlayerData,
+        user_id2: MappedPlayerData,
+        user_id3: MappedPlayerData,
+        ...
+    }
+    ```
+    
+    Using `.get()` should return `MappedPlayerData`
+    """
+    __getitem__: dict[str, MappedPlayerData]
 
 class RawPlayerDataCollection(TypedDict):
+    """Object type when getting the contents of the json data file
+    ```
+    file_version: Optional[int]
     update_date: float
+    mode: str
+    country: str
+    pages: int
+    map: list[str]
+    data: dict[str, list[int | str | float]]
+    ```
+    """
+    file_version: Optional[int]
+    update_date: float
+    mode: str
+    country: str
+    pages: int
     map: list[str]
     data: dict[str, list[int | str | float]]
 
