@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
 import argparse, os
 
-from scripts.json_player_data import get_comparison_and_mapped_data
+from scripts.json_player_data import MappedPlayerDataCollection, get_comparison_and_mapped_data
 
 def generate_html_from_data(
-    data:dict[str,dict], 
-    data_difference:dict[str,dict] = None,
+    data:MappedPlayerDataCollection, 
+    data_difference:MappedPlayerDataCollection = None,
     timestamp:float = 0.0, 
     test:bool = False,
     output_file:str = 'docs/index.html',
@@ -21,18 +21,18 @@ def generate_html_from_data(
     pp_total = 0
     pc_total = 0
     
-    def _td(td):
+    def td(td):
         return f'<td>{td}</td>'
     
-    def _img(i):
+    def avatar(i):
         _i = f'<img src="https://a.ppy.sh/{i}" loading="lazy">'
-        return _td(_i)
+        return td(_i)
     
-    def _comp(id, stat, return_change=False):
+    def difference_td(id, stat, return_change=False):
         nonlocal pp_gain, rank_gain, pc_gain, pp_total, pc_total
         
         if data_difference is None:
-            return _td(data[id].get(stat))
+            return td(data[id].get(stat))
         
         _green = 'class="increase"'
         _red = 'class="decrease"'
@@ -45,7 +45,7 @@ def generate_html_from_data(
             if compare > pp_gain[0]:
                 pp_gain = (compare, data[id]['ign'])
         
-        if stat == 'rank':
+        if stat == 'country_rank':
             if compare > rank_gain[0]:
                 rank_gain = (compare, data[id]['ign'])
         
@@ -68,26 +68,26 @@ def generate_html_from_data(
         change = f'<sup {style}>({sign}{compare})</sup>' if compare != 0 else ''
         
         if stat in ['acc']:
-            return _td(f'{current:.2f}%{change}')
+            return td(f'{current:.2f}%{change}')
         else:
-            return _td(f'{current:,}{change}')
+            return td(f'{current:,}{change}')
     
-    for l in data:
+    for user_id in data:
         tr_class = ''
         tr_class_list = []
 
-        pic = _img(l)
-        rank = _comp(l, 'rank')
-        rankc = _comp(l, 'rank', True)
-        ign = _td(data[l]['ign'])
-        pp = _comp(l, 'pp')
-        acc = _comp(l, 'acc')
-        pc = _comp(l, 'play_count')
-        x = _comp(l, 'rank_x')
-        s = _comp(l, 'rank_s')
-        a = _comp(l, 'rank_a')
+        pic = avatar(user_id)
+        rank = difference_td(user_id, 'country_rank')
+        rankc = difference_td(user_id, 'country_rank', True)
+        ign = td(data[user_id]['ign'])
+        pp = difference_td(user_id, 'pp')
+        acc = difference_td(user_id, 'acc')
+        pc = difference_td(user_id, 'play_count')
+        x = difference_td(user_id, 'rank_x')
+        s = difference_td(user_id, 'rank_s')
+        a = difference_td(user_id, 'rank_a')
         
-        if data_difference[l]['new_entry']:
+        if data_difference[user_id]['new_entry']:
             tr_class_list.append('new-entry')
         
         if rankc == 'up':
