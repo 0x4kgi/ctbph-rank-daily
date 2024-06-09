@@ -1,4 +1,3 @@
-import random
 from ossapi import GameMode, Ossapi, Score, User
 from datetime import datetime
 from dotenv import load_dotenv
@@ -40,6 +39,32 @@ def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> l
 
 def get_user_info(api:Ossapi, user_id) -> User:
     return api.user(user_id, mode=GameMode.CATCH)
+
+def simplify_number(num):
+    """
+    ChatGPT code, i got too lazy.
+    
+    Simplifies a number by adding appropriate suffixes (k, M, B, T) for thousands, millions, billions, and trillions.
+    
+    Parameters:
+    num (int or float): The number to simplify.
+    
+    Returns:
+    str: The simplified number with the appropriate suffix.
+    """
+    suffixes = ['', 'k', 'M', 'B', 'T']
+    magnitude = 0
+    
+    # Determine the magnitude
+    while abs(num) >= 1000 and magnitude < len(suffixes) - 1:
+        magnitude += 1
+        num /= 1000.0
+    
+    # Format the number with the appropriate suffix
+    if magnitude == 0:
+        return f"{num:.0f}"
+    else:
+        return f"{num:.2f}{suffixes[magnitude]}"
 
 def get_emote_for_score_grade(grade:str) -> str:
     ranks_dict = {
@@ -105,13 +130,15 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
 
     return embed_data
 
+# TODO: clean the parameters to avoid adding another one if more stats are shown
 def create_player_summary_fields(
     pp_gainers,
     rank_gainers,
     active_players,
+    ranked_score_gainers,
     latest_data,
     comparison_data
-) -> tuple[EmbedField, EmbedField, EmbedField]:
+) -> list[EmbedField]:
     def format_field(name, data, formatter, stat, limit=5) -> EmbedField:
         return {
             'name': name,
@@ -121,7 +148,7 @@ def create_player_summary_fields(
         }
         
     def _uid_link(item):
-        return item[0], f'https://osu.ppy.sh/users/{item[0]}'
+        return item[0], f'https://osu.ppy.sh/users/{item[0]}/fruits'
 
     def _get_stats(uid, stat):
         nonlocal latest_data, comparison_data
@@ -129,6 +156,7 @@ def create_player_summary_fields(
         new = latest_data[uid][stat]
         return old, new
     
+    # TODO: maybe reduce code repetition here, on the formatters
     def pp_formatter(item):
         uid, link = _uid_link(item)
         ign = item[1]['ign']
@@ -149,14 +177,28 @@ def create_player_summary_fields(
         gained = item[1]['play_count']
         old, new = _get_stats(uid, 'play_count')
         return f'1. [**{ign}**]({link}) • {old:,} → {new:,} (+**{gained:,}** plays)'
+    
+    def rs_formatter(item):
+        uid, link = _uid_link(item)
+        ign = item[1]['ign']
+        gained = item[1]['ranked_score']
+        old, new = _get_stats(uid, 'ranked_score')
+        return f'1. [**{ign}**]({link}) • {simplify_number(old)} → {simplify_number(new)} (+**{simplify_number(gained)}**)'
 
-    pp_field = format_field('farmers', pp_gainers, pp_formatter, 'pp')
+    # this is getting ugly, man
+    pp_field = format_field('pp farmers', pp_gainers, pp_formatter, 'pp')
     rank_field = format_field('PH rank climbers', rank_gainers, rank_formatter, 'country_rank')
     pc_field = format_field('"play more" gamers', active_players, pc_formatter, 'play_count')
+    rs_field = format_field('ranked score farmers', ranked_score_gainers, rs_formatter, 'ranked_score')
 
-    return pp_field, rank_field, pc_field
+    return [ pp_field, rank_field, pc_field, rs_field ]
 
-def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -> str:
+def description_maker(
+    active_players:dict,
+    pp_gainers:dict,
+    rank_gainers:dict,
+    ranked_score_gainers:dict,
+) -> str:
     import re
     
     def above_zero_count(data:dict, key:str) -> int:
@@ -165,6 +207,7 @@ def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -
     def total_stat(data, key):
         return sum([data[i][key] for i in data if data[i][key] > 0])
     
+    # TODO: maybe clean this up too, but this is nothing major anyway
     active_count = above_zero_count(active_players, 'play_count')
     pp_gain_count = above_zero_count(pp_gainers, 'pp')
     rank_gain_count = above_zero_count(rank_gainers, 'country_rank')
@@ -172,6 +215,7 @@ def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -
     total_pc = total_stat(active_players, 'play_count')
     total_pp = total_stat(pp_gainers, 'pp')
     total_rank = total_stat(rank_gainers, 'country_rank')
+    total_ranked_score = simplify_number(total_stat(ranked_score_gainers, 'ranked_score'))
     
     # use !n for newlines
     description = """There are: **{:,}** players who farmed,
@@ -179,13 +223,15 @@ def description_maker(active_players:dict, pp_gainers:dict, rank_gainers:dict) -
     and **{:,}** players who played the game.!n!n
     In __total__ there were: **{:,}pp**,
     **{:,} ranks**,
-    and **{:,} play count** gained this day!""".format(
+    **{:,} play count**,
+    and **{} ranked score** gained this day!""".format(
         pp_gain_count,
         rank_gain_count,
         active_count,
         total_pp,
         total_rank,
-        total_pc
+        total_pc,
+        total_ranked_score,
     )
     
     # weird hack, i know
@@ -201,14 +247,21 @@ def send_activity_ranking_webhook(
     data_difference:dict,
     latest_date:datetime=datetime.now(),
 ) -> None:
+    
+    # TODO: this is getting ridiculous, find a way to simplify this
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'country_rank', True)
+    ranked_score_gainers = get_sorted_dict_on_stat(data_difference, 'ranked_score', True)
     
-    pp_field, rank_field, pc_field = create_player_summary_fields(
-        pp_gainers, rank_gainers, active_players,
-        latest_mapped_data, 
-        comparison_mapped_data
+    # TODO: clean this up, please holy fuck
+    fields = create_player_summary_fields(
+        pp_gainers=pp_gainers,
+        rank_gainers=rank_gainers,
+        active_players=active_players,
+        ranked_score_gainers=ranked_score_gainers,
+        latest_data=latest_mapped_data,
+        comparison_data=comparison_mapped_data
     )
     
     footer = {
@@ -218,8 +271,13 @@ def send_activity_ranking_webhook(
     main_embed = embed_maker(
         title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
         url='https://0x4kgi.github.io/ctbph-rank-daily/',
-        description=description_maker(active_players, pp_gainers, rank_gainers),
-        fields=[ pp_field, rank_field, pc_field ],
+        description=description_maker(
+            active_players,
+            pp_gainers,
+            rank_gainers,
+            ranked_score_gainers
+        ),
+        fields=fields,
         footer=footer,
         color=12517310
     )
