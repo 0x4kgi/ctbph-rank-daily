@@ -1,5 +1,9 @@
 from datetime import datetime
-from scripts.json_player_data import MappedPlayerDataCollection, get_comparison_and_mapped_data
+from scripts.json_player_data import (
+    MappedPlayerDataCollection,
+    get_comparison_and_mapped_data,
+    get_sorted_dict_on_stat
+)
 
 import argparse
 import scripts.general_utils as util
@@ -14,13 +18,7 @@ def generate_html_from_data(
 ) -> str:
     rows = ''
     
-    pp_gain = (0, 'nobody')
-    rank_gain = (0, 'nobody')
-    pc_gain = (0, 'nobody')
-    pp_total = 0
-    pc_total = 0
-    
-    def td(td):
+    def td(td) -> str:
         return html.elem('td', td)
     
     def avatar(user_id) -> str:
@@ -30,44 +28,25 @@ def generate_html_from_data(
         })
         return td(image)
     
-    def difference_td(id, stat, return_change=False):
-        nonlocal pp_gain, rank_gain, pc_gain, pp_total, pc_total
-        
+    def difference_td(id, stat) -> str:
         if data_difference is None:
             return td(data[id].get(stat))
-        
-        _green = 'class="increase"'
-        _red = 'class="decrease"'
         
         current = data[id].get(stat)
         compare = data_difference[id].get(stat, 0)
         
-        if stat == 'pp':
-            pp_total += compare
-            if compare > pp_gain[0]:
-                pp_gain = (compare, data[id]['ign'])
-        
-        if stat == 'country_rank':
-            if compare > rank_gain[0]:
-                rank_gain = (compare, data[id]['ign'])
-        
-        if stat == 'play_count':
-            pc_total += compare
-            if compare > pc_gain[0]:
-                pc_gain = (compare, data[id]['ign'])
-        
-        if return_change:
-            if compare > 0:
-                return 'up'
-            elif compare < 0:
-                return 'down'
-        
         if stat in ['acc', 'pp']:
             compare = round(compare, 2)
         
-        sign = '+' if compare > 0 else ''
-        style = _red if compare < 0 else _green
-        change = f'<sup {style}>({sign}{compare})</sup>' if compare != 0 else ''
+        change = ''
+        if compare:
+            change = html.elem('sup',
+                '+' if compare > 0 else '',
+                str(compare),
+                **{
+                    'class': 'increase' if compare > 0 else 'decrease'
+                }
+            )
         
         if stat in ['acc']:
             return td(f'{current:.2f}%{change}')
@@ -75,12 +54,10 @@ def generate_html_from_data(
             return td(f'{current:,}{change}')
     
     for user_id in data:
-        tr_class = ''
         tr_class_list = []
 
         pic = avatar(user_id)
         rank = difference_td(user_id, 'country_rank')
-        rankc = difference_td(user_id, 'country_rank', True)
         ign = td(data[user_id]['ign'])
         pp = difference_td(user_id, 'pp')
         acc = difference_td(user_id, 'acc')
@@ -92,33 +69,51 @@ def generate_html_from_data(
         if data_difference[user_id]['new_entry']:
             tr_class_list.append('new-entry')
         
-        if rankc == 'up':
+        if data_difference[user_id]['country_rank'] > 0:
             tr_class_list.append('rank-up')
-        elif rankc == 'down':
+        elif data_difference[user_id]['country_rank'] < 0:
             tr_class_list.append('rank-down')
         
-        if len(tr_class_list) > 0:
-            tr_class = ' '.join(tr_class_list)
-            tr_class = f' class="{tr_class}"'
-
-        rows += f'<tr{tr_class}>{rank}{pic}{ign}{pp}{acc}{pc}{x}{s}{a}</tr>\n'
+        rows += html.table_row(
+            rank, pic, ign, pp, acc, pc, x, s, a,
+            **{
+                # TODO: this is ew, if possible clean this up, ty
+                'class': ' '.join(tr_class_list) if len(tr_class_list) else None
+            }
+        ) + '\n'
     
     formatted_time = util.timestamp_utc_offset(
         timestamp=timestamp,
         time_offset=8,
         time_format="%Y-%m-%d %H:%M:%S"
     )
-
+    
+    def total_stat(data, key) -> int:
+        return sum([data[i][key] for i in data if data[i][key] > 0])
+    
+    # what the fuck
+    # get_sorted_dict_on_stat returns a dict
+    # but you cannot get_sorted_dict_on_stat().items()[0] this
+    # so to get the first element, cast it to a list and since an element is a tuple
+    # discard the first since its just the user_id and we only need the dict
+    # and then just do normal dict[key] to get relevant values
+    # unsure if this will die if some random bullshit happens, we will see
+    _, top_pp_gain = list(get_sorted_dict_on_stat(data_difference, 'pp', True).items())[0]
+    _, top_pc_gain = list(get_sorted_dict_on_stat(data_difference, 'play_count', True).items())[0]
+    _, top_rank_gain = list(get_sorted_dict_on_stat(data_difference, 'country_rank', True).items())[0]
+    
+    # TODO: i dont like how this ended up at all, clean up please
+    # IT LOOKS SO BAD!!
     replacements = {
         'updated_at': formatted_time,
-        'pp_gain': '{:,}'.format(round(pp_gain[0])),
-        'pp_name': pp_gain[1],
-        'rank_gain': '{:,}'.format(rank_gain[0]),
-        'rank_name': rank_gain[1],
-        'pc_gain': '{:,}'.format(pc_gain[0]),
-        'pc_name': pc_gain[1],
-        'pp_total': round(pp_total,2),
-        'pc_total': '{:,}'.format(pc_total),
+        'pp_gain': '{:,}'.format(round(top_pp_gain.get('pp', -1))),
+        'pp_name': top_pp_gain.get('ign', 'nobody'),
+        'rank_gain': '{:,}'.format(top_rank_gain.get('country_rank', -1)),
+        'rank_name': top_rank_gain.get('ign', 'nobody'),
+        'pc_gain': '{:,}'.format(top_pc_gain.get('play_count', -1)),
+        'pc_name': top_pc_gain.get('ign', 'nobody'),
+        'pp_total': round(total_stat(data_difference, 'pp'), 2),
+        'pc_total': '{:,}'.format(total_stat(data_difference, 'play_count')),
         'rows': rows,
     }
     
