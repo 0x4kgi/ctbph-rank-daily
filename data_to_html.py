@@ -1,7 +1,9 @@
-from datetime import datetime, timedelta, timezone
-import argparse, os
-
+from datetime import datetime
 from scripts.json_player_data import MappedPlayerDataCollection, get_comparison_and_mapped_data
+
+import argparse
+import scripts.general_utils as util
+import scripts.html_utils as html
 
 def generate_html_from_data(
     data:MappedPlayerDataCollection, 
@@ -10,9 +12,6 @@ def generate_html_from_data(
     test:bool = False,
     output_file:str = 'docs/index.html',
 ) -> str:
-    with open('docs/main-page.template.html') as file:
-        html_template = file.read()
-    
     rows = ''
     
     pp_gain = (0, 'nobody')
@@ -22,11 +21,14 @@ def generate_html_from_data(
     pc_total = 0
     
     def td(td):
-        return f'<td>{td}</td>'
+        return html.elem('td', td)
     
-    def avatar(i):
-        _i = f'<img src="https://a.ppy.sh/{i}" loading="lazy">'
-        return td(_i)
+    def avatar(user_id) -> str:
+        image = html.elem(tag_name='img', **{
+            'src': f'https://a.ppy.sh/{user_id}',
+            'loading': 'lazy'
+        })
+        return td(image)
     
     def difference_td(id, stat, return_change=False):
         nonlocal pp_gain, rank_gain, pc_gain, pp_total, pc_total
@@ -101,38 +103,33 @@ def generate_html_from_data(
 
         rows += f'<tr{tr_class}>{rank}{pic}{ign}{pp}{acc}{pc}{x}{s}{a}</tr>\n'
     
-    dt_object = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-    utc_plus_8 = timezone(timedelta(hours=8))
-    dt_utc_plus_8 = dt_object.astimezone(utc_plus_8)
-    formatted_time = dt_utc_plus_8.strftime("%Y-%m-%d %H:%M:%S")
+    formatted_time = util.timestamp_utc_offset(
+        timestamp=timestamp,
+        time_offset=8,
+        time_format="%Y-%m-%d %H:%M:%S"
+    )
 
     replacements = {
         'updated_at': formatted_time,
-        'pp_gain': round(pp_gain[0]),
+        'pp_gain': '{:,}'.format(round(pp_gain[0])),
         'pp_name': pp_gain[1],
-        'rank_gain': rank_gain[0],
+        'rank_gain': '{:,}'.format(rank_gain[0]),
         'rank_name': rank_gain[1],
-        'pc_gain': pc_gain[0],
+        'pc_gain': '{:,}'.format(pc_gain[0]),
         'pc_name': pc_gain[1],
         'pp_total': round(pp_total,2),
-        'pc_total': pc_total,
+        'pc_total': '{:,}'.format(pc_total),
         'rows': rows,
     }
-
-    for r_key in replacements:
-        token = '{{__' + r_key + '__}}'
-        html_template = html_template.replace(token, str(replacements[r_key]))
-    
-    output = html_template
     
     if test:
         output_file = 'tests/' + output_file
     
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    full_output_path = os.path.join(script_dir, output_file)
-    os.makedirs(os.path.dirname(full_output_path), exist_ok=True)
-    with open(output_file, 'w') as file:
-        file.write(output)
+    output_file = html.create_page_from_template(
+        template_path='docs/main-page.template.html',
+        output_path=output_file,
+        **replacements
+    )
     
     return output_file
 
