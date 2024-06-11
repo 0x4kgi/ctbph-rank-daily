@@ -23,11 +23,23 @@ def elem(
         ```
     
     Returns:
-        str: the tag in the following format:
+        str: the tag in the following format if the tag is not a non closing one:
         ```html
         <tag_name attributes,>content,</tag_name>
         ```
+        If the tag is an `img`, `link`, `br` or other related, this is returned:
+        ```html
+        <tag_name attributes, />
+        ```
     """
+    
+    non_closing_tags = [
+        'br',
+        'hr',
+        'img',
+        'input',
+        'link',
+    ]
 
     full_content = ' '.join(content)
 
@@ -42,7 +54,10 @@ def elem(
     else:
         head = tag_name
 
-    return f'<{head}>{full_content}</{tag_name}>'
+    if tag_name in non_closing_tags:
+        return f'<{head} />'
+    else:
+        return f'<{head}>{full_content}</{tag_name}>'
 
 def table_row(
     *td: str,
