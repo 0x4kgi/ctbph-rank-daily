@@ -204,7 +204,7 @@ def description_maker(
     def above_zero_count(data:dict, key:str) -> int:
         return len([i for i in data.items() if i[1][key] > 0])
     
-    def total_stat(data, key):
+    def total_stat(data, key) -> int:
         return sum([data[i][key] for i in data if data[i][key] > 0])
     
     # TODO: maybe clean this up too, but this is nothing major anyway
