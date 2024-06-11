@@ -29,7 +29,7 @@ def elem(
         ```
         If the tag is an `img`, `link`, `br` or other related, this is returned:
         ```html
-        <tag_name attributes, />
+        <tag_name attributes,/>
         ```
     """
     
@@ -41,7 +41,7 @@ def elem(
         'link',
     ]
 
-    full_content = ' '.join(content)
+    full_content = ''.join(content)
 
     attrs = ' '.join([ 
         f'{key}="{value}"' 
@@ -55,7 +55,7 @@ def elem(
         head = tag_name
 
     if tag_name in non_closing_tags:
-        return f'<{head} />'
+        return f'<{head}/>'
     else:
         return f'<{head}>{full_content}</{tag_name}>'
 
