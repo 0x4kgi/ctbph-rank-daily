@@ -1,9 +1,15 @@
 from datetime import datetime
 from dotenv import load_dotenv
-from ossapi import Ossapi, GameMode, RankingType, models
+from ossapi import Ossapi, GameMode, RankingType, Score, models
 import json, time, argparse, re, os
 
-from scripts.json_player_data import MappedPlayerData, RawPlayerDataCollection
+from scripts.json_player_data import (
+    MappedPlayerData,
+    RawPlayerDataCollection,
+    get_comparison_and_mapped_data,
+    get_sorted_dict_on_stat,
+)
+from send_discord_webhook import get_recent_plays_of_user
 
 def extract_data_from_rows(rows:models.Rankings) -> list[MappedPlayerData]:
     rows_data: list[MappedPlayerData] = []
@@ -125,17 +131,102 @@ def dump_to_file(
     
     return output_file
 
+def get_pp_plays(
+    mode: str = 'fruits',
+    country: str = 'PH',
+    test: bool = False,
+) -> dict:
+    client_id = os.getenv('OSU_CLIENT_ID')
+    client_secret = os.getenv('OSU_CLIENT_SECRET')
+    api = Ossapi(client_id, client_secret)
+
+    # temporarily using the function, until i placed this on a module
+    def sort_scores_by_pp(
+        scores:list[Score],
+        top=10,
+        min_date:datetime=0,
+        max_date:datetime=datetime.now().timestamp(),
+    ) -> list[Score]:
+        
+        def score_filter(score:Score) -> bool:
+            timestamp = score.created_at.timestamp()
+            if score.pp is None:
+                return False
+            if timestamp < min_date:
+                return False
+            if timestamp > max_date:
+                return False
+            return True
+        
+        filtered_scores:list[Score] = filter(score_filter, scores)
+        
+        return sorted(
+            filtered_scores,
+            key=lambda s: s.pp,
+            reverse=True
+        )[:top]
+
+    processed_data = get_comparison_and_mapped_data(
+        base_date=datetime.now(),
+        compare_date_offset=1,
+        country=country,
+        mode=mode,
+        test=test
+    )
+
+    if processed_data.latest_mapped_data is None:
+        print('No latest data for comparison')
+        return
+    if processed_data.comparison_mapped_data is None:
+        print('No old data for comparison')
+        return
+    
+    active_players = get_sorted_dict_on_stat(
+        data=processed_data.data_difference,
+        stat='play_count',
+        highest_first=True,
+    )
+
+    scores:list[Score] = []
+    
+    for user_id in active_players:
+        print('Fetching scores for', active_players[user_id]['ign'], '...')
+        # temporarily using the function, until i placed this on a module
+        user_scores = get_recent_plays_of_user(
+            api=api,
+            user_id=user_id,
+            type='recent',
+            limit=active_players[user_id]['play_count'],
+        )
+        scores += user_scores
+    
+    scores = sort_scores_by_pp(scores, top=100)
+
+    for score in scores:
+        print(score.pp, score.id, score.user_id, score.mode, score.beatmapset.title, score.beatmap.version)
+
 def run(
     mode: str = 'fruits',
     country: str = 'PH',
     pages: int = 20,
     formatted: bool = False,
     test: bool = False,
+    skip_pp_plays: bool = False,
+    skip_rankings: bool = False,
 ) -> None:
-    # Gather player rankings
-    data = get_rankings(mode=mode, country=country, pages=pages)
-    output_file = dump_to_file(data=data, test=test, formatted=formatted)
-    print(output_file)
+    if not skip_rankings:
+        # Gather player rankings
+        data = get_rankings(mode=mode, country=country, pages=pages)
+        output_file = dump_to_file(data=data, test=test, formatted=formatted)
+        print(output_file)
+    else:
+        print('Skipping gathering of rankings')
+
+    if not skip_pp_plays:
+        # Get active players, based on playcount
+        pp_data = get_pp_plays(mode=mode, country=country, test=test)
+    else:
+        print('Skipping gathering of pp plays')
 
 if __name__ == '__main__':
     load_dotenv()
@@ -147,7 +238,9 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--country', type=str, default='PH', help="What country's leaderboard to scan for. Uses the 2 letter system (US, JP, PH, etc.)")
     parser.add_argument('--test', action='store_true', help='Just do tests')
     parser.add_argument('--formatted', action='store_true', help='Make the output .json to be somewhat readable')
-    
+    parser.add_argument('--skip-pp-plays', action='store_true', help='Do not try to gather top pp plays.')
+    parser.add_argument('--skip-rankings', action='store_true', help='Skip gathering leaderboard rankings.')
+
     args = parser.parse_args()
 
     mode_map = {
@@ -167,4 +260,6 @@ if __name__ == '__main__':
         pages=args.pages,
         formatted=args.formatted,
         test=args.test,
+        skip_pp_plays=args.skip_pp_plays,
+        skip_rankings=args.skip_rankings,
     )
