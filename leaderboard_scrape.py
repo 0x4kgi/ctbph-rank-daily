@@ -3,10 +3,10 @@ from dotenv import load_dotenv
 from ossapi import Ossapi, GameMode, RankingType, models
 import json, time, argparse, re, os
 
-from scripts.json_player_data import MappedPlayerData, MappedPlayerDataCollection, RawPlayerDataCollection
+from scripts.json_player_data import MappedPlayerData, RawPlayerDataCollection
 
 def extract_data_from_rows(rows:models.Rankings) -> list[MappedPlayerData]:
-    rows_data:list[MappedPlayerData] = []
+    rows_data: list[MappedPlayerData] = []
     
     for data in rows.ranking:
         rows_data.append({
@@ -28,7 +28,11 @@ def extract_data_from_rows(rows:models.Rankings) -> list[MappedPlayerData]:
 
     return rows_data
 
-def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> list[MappedPlayerData]:
+def get_page_rankings(
+    page: int = 1,
+    mode: str = GameMode.CATCH,
+    country: str = None,
+) -> list[MappedPlayerData]:
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
 
@@ -39,7 +43,11 @@ def get_page_rankings(page:int=1, mode:str=GameMode.OSU, country:str=None) -> li
 
     return page_data
 
-def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> RawPlayerDataCollection:
+def get_rankings(
+    mode: str = 'osu',
+    country: str = None,
+    pages: str = 1
+) -> RawPlayerDataCollection:
     pages = min(pages, 200)
 
     value_mapping = [
@@ -88,7 +96,11 @@ def get_rankings(mode:str='osu', country:str=None, pages:str=1) -> RawPlayerData
 
     return full_data
 
-def dump_to_file(data:RawPlayerDataCollection, test:bool=False, formatted:bool=False) -> str:
+def dump_to_file(
+    data: RawPlayerDataCollection,
+    test: bool = False,
+    formatted: bool = False,
+) -> str:
     mode = data['mode']
     country = data['country']
     pages = data['pages']
@@ -113,7 +125,21 @@ def dump_to_file(data:RawPlayerDataCollection, test:bool=False, formatted:bool=F
     
     return output_file
 
-def main() -> None:
+def run(
+    mode: str = 'fruits',
+    country: str = 'PH',
+    pages: int = 20,
+    formatted: bool = False,
+    test: bool = False,
+) -> None:
+    # Gather player rankings
+    data = get_rankings(mode=mode, country=country, pages=pages)
+    output_file = dump_to_file(data=data, test=test, formatted=formatted)
+    print(output_file)
+
+if __name__ == '__main__':
+    load_dotenv()
+    
     parser = argparse.ArgumentParser(description='Gets the leaderboard for a mode and country. Via web scraping')
     
     parser.add_argument('-m', '--mode', type=str, default='2', help="What game mode to scan for. You can use owo bot's -m params or short hands like ctb, std, etc.")
@@ -123,7 +149,7 @@ def main() -> None:
     parser.add_argument('--formatted', action='store_true', help='Make the output .json to be somewhat readable')
     
     args = parser.parse_args()
-    
+
     mode_map = {
         '0': 'osu', 'osu': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',
         '1': 'taiko', 'taiko': 'taiko', 'taco': 'taiko', 't': 'taiko',
@@ -133,13 +159,12 @@ def main() -> None:
     mode = mode_map.get(args.mode)
     if mode is None:
         print(f'This mode: "{args.mode}" is not a valid one. Try again')
-        return
+        exit()
     
-    data = get_rankings(mode=mode, country=args.country, pages=args.pages)
-    output_file = dump_to_file(data=data, test=args.test, formatted=args.formatted)
-    
-    print(output_file)
-
-if __name__ == '__main__':
-    load_dotenv()
-    main()
+    run(
+        mode=mode,
+        country=args.country,
+        pages=args.pages,
+        formatted=args.formatted,
+        test=args.test,
+    )
