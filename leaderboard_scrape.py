@@ -5,6 +5,7 @@ import json, time, argparse, re, os
 
 from scripts.json_player_data import (
     MappedPlayerData,
+    MappedScoreData,
     RawPlayerDataCollection,
     get_comparison_and_mapped_data,
     get_sorted_dict_on_stat,
@@ -137,7 +138,7 @@ def dump_to_file(
     
     return output_file
 
-def format_score_data_from_list(scores: list[Score]) -> list:
+def format_score_data_from_list(scores: list[Score]) -> list[MappedScoreData]:
     if len(scores) == 0:
         return []
 
@@ -151,14 +152,14 @@ def format_score_data_from_list(scores: list[Score]) -> list:
         score_list.append({
             'score_id': score.id,
             'score_type': 'old' if len(str(score.id)) < 10 else 'new',
-            'score_mode': _mode[score.mode_int],
+            #'score_mode': _mode[score.mode_int],
             'score_mods': str(score.mods),
             'score_pp': score.pp,
             
             'user_id': score.user_id,
 
-            'beatmapset_title': score.beatmapset.title,
-            'beatmap_version': score.beatmap.version,
+            #'beatmapset_title': score.beatmapset.title,
+            #'beatmap_version': score.beatmap.version,
 
             'beatmap_id': score.beatmap.id,
             'beatmapset_id': score.beatmapset.id,
@@ -170,7 +171,7 @@ def get_pp_plays(
     mode: str = 'fruits',
     country: str = 'PH',
     test: bool = False,
-) -> dict:
+) -> RawPlayerDataCollection:
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
     api = Ossapi(client_id, client_secret)
