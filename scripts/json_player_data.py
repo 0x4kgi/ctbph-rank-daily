@@ -35,6 +35,24 @@ class MappedPlayerData(TypedDict):
     ranked_score: int
     total_hits: int
 
+class MappedScoreData(TypedDict):
+    """Object for score data
+    ```
+    score_type: str
+    score_mods: str
+    score_pp: float
+    user_id: int
+    beatmap_id: int
+    beatmapset_id: int
+    ```
+    """
+    score_type: str
+    score_mods: str
+    score_pp: float
+    user_id: int
+    beatmap_id: int
+    beatmapset_id: int
+
 class MappedPlayerDataCollection(TypedDict):
     """A collection of player data that includes the player id
     
@@ -52,6 +70,8 @@ class MappedPlayerDataCollection(TypedDict):
     """
     __getitem__: dict[str, MappedPlayerData]
 
+class MappedScoreDataCollection(TypedDict):
+    __getitem__: dict[str, MappedScoreData]
 class RawPlayerDataCollection(TypedDict):
     """Object type when getting the contents of the json data file
     ```
@@ -64,11 +84,12 @@ class RawPlayerDataCollection(TypedDict):
     data: dict[str, list[int | str | float]]
     ```
     """
-    file_version: Optional[int]
+    file_version: Optional[float]
     update_date: float
+    file_type: Optional[str]
     mode: str
     country: str
-    pages: int
+    pages: Optional[int]
     map: list[str]
     data: dict[str, list[int | str | float]]
 
@@ -112,7 +133,16 @@ def get_sorted_dict_on_stat(
         if data[i].get(stat, 0) != 0
     }
 
-def get_json(file_path: str, test: bool):
+def get_json(file_path: str, test: bool) -> dict:
+    """Gets the json file at the specified path. Can be specified if grabbing from tests
+
+    Args:
+        file_path (str): File path
+        test (bool): Is grabbing from the test folder?
+
+    Returns:
+        dict: The json data in dict
+    """
     current_dir = os.path.dirname(__file__)
         
     if test:
@@ -135,6 +165,7 @@ def get_data_at_date(
     date:str,
     country:str,
     mode:str,
+    file_type:str=None,
     test:bool=False
 ) -> RawPlayerDataCollection|None:
     """Gets the json data file for the date, country, mode specified
@@ -146,12 +177,16 @@ def get_data_at_date(
         test (bool, optional): Uses files in tests/ to avoid cluttering up main files. Defaults to False.
 
     Returns:
-        dict: json as dictionary none if the file does not exist yet
+        dict: json as dictionary, `None` if the file does not exist yet
     """
     
-    target_file = f'data/{date}/{country}-{mode}.json'
+    # TODO: maybe do something about this
+    if file_type is not None:
+        target_file = f'data/{date}/{country}-{mode}-{file_type}.json'
+    else:
+        target_file = f'data/{date}/{country}-{mode}.json'
     
-    return get_json(target_file, test)
+    return get_json(file_path=target_file, test=test)
 
 def compare_player_data(
     today_data:MappedPlayerDataCollection,
@@ -192,7 +227,7 @@ def compare_player_data(
 
     return data
 
-def map_player_data(data:RawPlayerDataCollection) -> MappedPlayerDataCollection:
+def map_player_data(data:RawPlayerDataCollection) -> MappedPlayerDataCollection|MappedScoreDataCollection:
     decoded_data:MappedPlayerDataCollection = {}
     
     map = data['map']
@@ -252,7 +287,7 @@ def get_comparison_and_mapped_data(
     latest_string = latest_date.strftime('%Y/%m/%d')
     comparison_string = comparison_date.strftime('%Y/%m/%d')
 
-    latest_data = get_data_at_date(latest_string, country, mode, test)
+    latest_data = get_data_at_date(date=latest_string, country=country, mode=mode, test=test)
     latest_mapped_data = None
 
     if latest_data is not None:
@@ -261,7 +296,7 @@ def get_comparison_and_mapped_data(
 
     data_difference = None
 
-    comparison_data = get_data_at_date(comparison_string, country, mode, test)
+    comparison_data = get_data_at_date(date=comparison_string, country=country, mode=mode, test=test)
     comparison_mapped_data = None
 
     if comparison_data is not None and latest_data is not None:
