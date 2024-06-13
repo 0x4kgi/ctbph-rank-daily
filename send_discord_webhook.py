@@ -9,6 +9,7 @@ from scripts.discord_webhook import (
     send_webhook,
 )
 from scripts.json_player_data import (
+    MappedPlayerDataCollection,
     MappedScoreDataCollection,
     get_comparison_and_mapped_data,
     get_data_at_date,
@@ -243,6 +244,13 @@ def description_maker(
     
     return description
 
+def get_new_entries(data:MappedPlayerDataCollection) -> MappedPlayerDataCollection:
+    return {
+        i: data[i]
+        for i in data
+        if data[i]['new_entry']
+    }
+
 def send_activity_ranking_webhook(
     latest_mapped_data:dict,
     comparison_mapped_data:dict,
@@ -254,7 +262,8 @@ def send_activity_ranking_webhook(
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'country_rank', True)
-    ranked_score_gainers = get_sorted_dict_on_stat(data_difference, 'ranked_score', True)
+    ranked_score_gainers = get_sorted_dict_on_stat(data_difference, 'ranked_score', True)    
+    new_entries = get_new_entries(data_difference)
     
     # TODO: clean this up, please holy fuck
     fields = create_player_summary_fields(
@@ -270,6 +279,8 @@ def send_activity_ranking_webhook(
         'text': 'Updates delivered daily at around midnight. Inaccurate data? Blame Eoneru.',
     }
     
+    embeds: list[Embed] = []
+    
     main_embed = embed_maker(
         title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
         url='https://0x4kgi.github.io/ctbph-rank-daily/',
@@ -283,10 +294,31 @@ def send_activity_ranking_webhook(
         footer=footer,
         color=12517310
     )
+    embeds.append(main_embed)
+    
+    if len(new_entries) > 0:
+        desc = []
+        for user_id in new_entries:
+            # /fruits should be temporary
+            desc.append(f'- [**{new_entries[user_id]['ign']}**](https://osu.ppy.sh/users/{user_id}/fruits)')
+        
+        full_desc = 'There are **{}** new peeps in the Top 1k!\nVisit [the site](https://0x4kgi.github.io/ctbph-rank-daily/) to see where they are. Try looking for ✨\n\nThey are:\n{}'.format(
+            len(new_entries),
+            '\n'.join(desc)
+        )
+        
+        embeds.append(embed_maker(
+            title='New players in the top 1k',
+            description=full_desc,
+            color=12517310,
+            footer={
+                'text': 'This is a rare occurrence, try pulling in your fave gacha, this is a sign!'
+            }
+        ))
     
     send_webhook(
         content='``` ```',
-        embeds=[ main_embed ],
+        embeds=embeds,
         username='Top 1k osu!catch PH tracker',
         avatar_url='https://iili.io/JQmQKKl.png'
     )
