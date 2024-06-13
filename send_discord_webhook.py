@@ -1,7 +1,6 @@
 from ossapi import GameMode, Ossapi, Score, User
 from datetime import datetime
 from dotenv import load_dotenv
-from typing import TypedDict, NotRequired
 
 from scripts.discord_webhook import (
     Embed,
@@ -10,8 +9,11 @@ from scripts.discord_webhook import (
     send_webhook,
 )
 from scripts.json_player_data import (
+    MappedScoreDataCollection,
     get_comparison_and_mapped_data,
+    get_data_at_date,
     get_sorted_dict_on_stat,
+    map_player_data,
 )
 
 import argparse, os, math
@@ -298,14 +300,14 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
                 return '**Full Combo**'
 
         # 1. {pp}pp - Player
-        info = '{}. **{:,.2f}**pp • **{}**\n'.format(
+        player_info = '{}. **{:,.2f}**pp • **{}**'.format(
             index + 1,
             score.pp,
             score._user.username,
         )
 
         # map name and link also mod?
-        info += ' - [**{} [{}]** [{:,.2f}*]]({}) +{}\n'.format(
+        map_info = ' - [**{} [{}]** [{:,.2f}*]]({}) +{}'.format(
             score.beatmapset.title,
             score.beatmap.version,
             score.beatmap.difficulty_rating,
@@ -314,14 +316,14 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
         )
 
         # score statistics
-        info += ' - {} / {:,.2f}% / {} / {:,}x\n'.format(
+        score_statistics = ' - {} / {:,.2f}% / {} / {:,}x\n'.format(
             get_emote_for_score_grade(score.rank),
             score.accuracy * 100,
             miss_format(score.statistics.count_miss),
             score.max_combo,
         )
 
-        return info
+        return '\n'.join([ player_info, map_info, score_statistics ])
 
     description:str = ''
 
@@ -332,58 +334,52 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
         description=description,
         color=12891853,
         footer={
-            'text': 'Only ranked submitted plays.'
+            'text': 'Only ranked submitted plays. Top 100 pp plays page, soon(Tea-Em)'
         }
     )
 
-def send_play_pp_ranking_webhook(api:Ossapi, data_difference:dict, latest_timestamp, comparison_timestamp):
-    def sort_scores_by_pp(
-        scores:list[Score],
-        top=10,
-        min_date:datetime=comparison_timestamp,
-        max_date:datetime=latest_timestamp,
-    ) -> list[Score]:
-        
-        def score_filter(score:Score) -> bool:
-            timestamp = score.created_at.timestamp()
-            if score.pp is None:
-                return False
-            if timestamp < min_date:
-                return False
-            if timestamp > max_date:
-                return False
-            return True
-        
-        filtered_scores:list[Score] = filter(score_filter, scores)
-        
-        return sorted(
-            filtered_scores,
-            key=lambda s: s.pp,
-            reverse=True
-        )[:top]
-    
-    active_players = get_sorted_dict_on_stat(
-        data=data_difference,
-        stat='play_count',
-        highest_first=True
+def send_play_pp_ranking_webhook(
+    api:Ossapi,
+    latest_timestamp:datetime,
+    mode:str,
+    country:str,
+    test:bool,
+    top:int=5
+) -> None:
+    # Get the pp scores from file
+    raw_scores = get_data_at_date(
+        date=latest_timestamp.strftime('%Y/%m/%d'),
+        country=country,
+        mode=mode,
+        file_type='pp-records',
+        test=test,
     )
     
-    scores:list[Score] = []
+    if raw_scores is None:
+        print('Cannot get pp score list at the moment.')
+        return
     
-    for user_id in active_players:
-        print('Fetching scores for', active_players[user_id]['ign'], '...')
-        user_scores = get_recent_plays_of_user(
-            api=api,
-            user_id=user_id,
-            type='recent',
-            limit=active_players[user_id]['play_count'],
-        )
-        scores += user_scores
+    # Map the scores to a dict
+    mapped_scores: MappedScoreDataCollection = map_player_data(raw_scores)
     
-    top = 5
+    # get the top 5 only and convert each to a Score object
+    # then append to a Score list
+    scores: list[Score] = []
+    for score_id, score_data in list(mapped_scores.items())[:top]:
+        # TODO: this could be wrapped in a function to have checking if the score
+        #       is correct
+        if score_data['score_type'] == 'old':
+            score = api.score_mode(mode, score_id)
+        else:
+            score = api.score(score_id)
+        
+        scores.append(score)
     
-    scores = sort_scores_by_pp(scores, top)
-
+    # end early if no scores are to be found
+    if len(scores) == 0:
+        print('No scores to be listed. :(')
+        return
+    
     # make the list of the top 10 as a separate webhook
     pp_list_embed = create_pp_record_list_embed(api, scores)
     send_webhook(
@@ -407,13 +403,15 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
 
     latest_date = datetime.now()
     processed_data = get_comparison_and_mapped_data(
-        latest_date, 1, country, mode, test
+        base_date=latest_date,
+        compare_date_offset=1,
+        country=country,
+        mode=mode,
+        test=test,
     )
     latest_mapped_data = processed_data.latest_mapped_data
     comparison_mapped_data = processed_data.comparison_mapped_data
     data_difference = processed_data.data_difference
-    latest_timestamp = processed_data.latest_data_timestamp
-    comparison_timestamp = processed_data.comparison_data_timestamp
     
     if latest_mapped_data is None:
         print('Cannot get latest data as of now.')
@@ -424,17 +422,18 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         return
     
     send_activity_ranking_webhook(
-        latest_mapped_data,
-        comparison_mapped_data,
-        data_difference,
-        latest_date,
+        latest_mapped_data=latest_mapped_data,
+        comparison_mapped_data=comparison_mapped_data,
+        data_difference=data_difference,
+        latest_date=latest_date,
     )
     
     send_play_pp_ranking_webhook(
-        api,
-        data_difference,
-        latest_timestamp,
-        comparison_timestamp
+        api=api,
+        latest_timestamp=latest_date,
+        mode=mode,
+        country=country,
+        test=test,
     )
 
 if __name__ == '__main__':
