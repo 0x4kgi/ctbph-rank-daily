@@ -112,6 +112,25 @@ def get_sorted_dict_on_stat(
         if data[i].get(stat, 0) != 0
     }
 
+def get_json(file_path: str, test: bool):
+    current_dir = os.path.dirname(__file__)
+        
+    if test:
+        file_path = 'tests/' + file_path
+
+    file_path = os.path.join(current_dir, '../' + file_path)
+    
+    print(f'Trying to get {file_path}...')
+    
+    try:
+        with open(file_path) as file:
+            data = json.load(file)
+    except OSError as osx:
+        print(f'{file_path} does not exist.')
+        return None
+        
+    return data
+
 def get_data_at_date(
     date:str,
     country:str,
@@ -130,23 +149,9 @@ def get_data_at_date(
         dict: json as dictionary none if the file does not exist yet
     """
     
-    current_dir = os.path.dirname(__file__)
-    
     target_file = f'data/{date}/{country}-{mode}.json'
-        
-    if test:
-        target_file = 'tests/' + target_file
-
-    file_path = os.path.join(current_dir, '../' + target_file)
     
-    try:
-        with open(file_path) as file:
-            data = json.load(file)
-    except OSError as osx:
-        print(f'{file_path} does not exist.')
-        return None
-        
-    return data
+    return get_json(target_file, test)
 
 def compare_player_data(
     today_data:MappedPlayerDataCollection,
