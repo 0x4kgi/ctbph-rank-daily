@@ -11,7 +11,10 @@ from scripts.json_player_data import (
 )
 from send_discord_webhook import get_recent_plays_of_user
 
-def extract_data_from_rows(rows:models.Rankings) -> list[MappedPlayerData]:
+def encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[any]]:
+    return data[key], [data[index] for index in map]
+
+def format_data_from_rows(rows:models.Rankings) -> list[MappedPlayerData]:
     rows_data: list[MappedPlayerData] = []
     
     for data in rows.ranking:
@@ -45,7 +48,7 @@ def get_page_rankings(
     api = Ossapi(client_id, client_secret)
     data = api.ranking(mode, RankingType.PERFORMANCE, country=country, cursor={'page':page})
 
-    page_data = extract_data_from_rows(data)
+    page_data = format_data_from_rows(data)
 
     return page_data
 
@@ -73,18 +76,16 @@ def get_rankings(
     ]
     values_key = 'id'
 
-    def _encode_to_map(map: list[str], data: dict[str, str], key: str) -> tuple[str, list[any]]:
-        return data[key], [data[index] for index in map]
-
     full_data:RawPlayerDataCollection = {
         # INFO: increment by one every time you change the format of the
         #       resulting json file and change data/file_versions.json too
-        'file_version': 1,
+        'file_version': 1.01,
         'update_date': time.time(),
         'mode': mode,
         'country': country if country else 'all',
         'pages': pages,
         'map': value_mapping,
+        'key': values_key,
         'data': {},
     }
 
@@ -94,7 +95,7 @@ def get_rankings(
         page_data = get_page_rankings(page+1, mode, country)
         
         for data in page_data:
-            uid, values = _encode_to_map(value_mapping, data, values_key)
+            uid, values = encode_to_map(value_mapping, data, values_key)
             full_data['data'][uid] = values
         
         fetch_duration = time.time() - fetch_start_time
@@ -109,7 +110,8 @@ def dump_to_file(
 ) -> str:
     mode = data['mode']
     country = data['country']
-    pages = data['pages']
+
+    file_type = data.get('type', None)
     
     today = datetime.now()
     date_string = today.strftime('%Y/%m/%d')
@@ -121,7 +123,11 @@ def dump_to_file(
         output3 = re.sub(r'("|\w),\s+'  , r'\1,'  , output2)
         output =  re.sub(r'(\d)\s+\]'   , r'\1]'  , output3)
     
-    output_file = f'data/{date_string}/{country}-{mode}.json'
+    if file_type:
+        output_file = f'data/{date_string}/{country}-{mode}-{file_type}.json'
+    else:
+        output_file = f'data/{date_string}/{country}-{mode}.json'
+    
     if test:
         output_file = 'tests/' + output_file
     
@@ -130,6 +136,35 @@ def dump_to_file(
         json_file.write(output)
     
     return output_file
+
+def format_score_data_from_list(scores: list[Score]) -> list:
+    if len(scores) == 0:
+        return []
+
+    score_list = []
+
+    _mode = {
+        0: 'osu', 1: 'taiko', 2: 'fruits', 3: 'mania'
+    }
+
+    for score in scores:
+        score_list.append({
+            'score_id': score.id,
+            'score_type': 'old' if len(str(score.id)) < 10 else 'new',
+            'score_mode': _mode[score.mode_int],
+            'score_mods': str(score.mods),
+            'score_pp': score.pp,
+            
+            'user_id': score.user_id,
+
+            'beatmapset_title': score.beatmapset.title,
+            'beatmap_version': score.beatmap.version,
+
+            'beatmap_id': score.beatmap.id,
+            'beatmapset_id': score.beatmapset.id,
+        })
+    
+    return score_list
 
 def get_pp_plays(
     mode: str = 'fruits',
@@ -201,9 +236,34 @@ def get_pp_plays(
         scores += user_scores
     
     scores = sort_scores_by_pp(scores, top=100)
+    formatted_list = format_score_data_from_list(scores)
 
-    for score in scores:
-        print(score.pp, score.id, score.user_id, score.mode, score.beatmapset.title, score.beatmap.version)
+    value_mapping = [
+        'score_type',
+        'score_mods',
+        'score_pp',
+        'user_id',
+        'beatmap_id',
+        'beatmapset_id',
+    ]
+    values_key = 'score_id'
+
+    full_data = {
+        'file_version': 1.01,
+        'update_date': time.time(),
+        'type': 'pp-records',
+        'mode': mode,
+        'country': country if country else 'all',
+        'map': value_mapping,
+        'key': values_key,
+        'data': {},
+    }
+
+    for scr in formatted_list:
+        id, values = encode_to_map(value_mapping, scr, values_key)
+        full_data['data'][id] = values
+    
+    return full_data
 
 def run(
     mode: str = 'fruits',
@@ -225,6 +285,8 @@ def run(
     if not skip_pp_plays:
         # Get active players, based on playcount
         pp_data = get_pp_plays(mode=mode, country=country, test=test)
+        output_file = dump_to_file(data=pp_data, test=test, formatted=formatted)
+        print(output_file)
     else:
         print('Skipping gathering of pp plays')
 

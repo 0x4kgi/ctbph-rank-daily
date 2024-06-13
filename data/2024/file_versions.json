@@ -23,5 +23,20 @@
             "map": "list[str]",
             "data": "dict[str,list[any]]"
         }
+    },
+    "1.01": {
+        "initial": "2024/06/13",
+        "description": "Added file type (optional) and key, made pages optional now",
+        "schema": {
+            "file_version": "int",
+            "update_date": "float",
+            "type": "Optional[str]",
+            "mode": "str",
+            "country": "str",
+            "pages": "Optional[int]",
+            "map": "list[str]",
+            "key": "str",
+            "data": "dict[str,list[any]]"
+        }
     }
 }
