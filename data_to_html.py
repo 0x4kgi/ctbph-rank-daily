@@ -1,15 +1,19 @@
 from datetime import datetime
 from scripts.json_player_data import (
     MappedPlayerDataCollection,
+    MappedScoreData,
+    MappedScoreDataCollection,
     get_comparison_and_mapped_data,
-    get_sorted_dict_on_stat
+    get_data_at_date,
+    get_sorted_dict_on_stat,
+    map_player_data
 )
 
 import argparse
 import scripts.general_utils as util
 import scripts.html_utils as html
 
-def generate_html_from_data(
+def generate_html_from_player_data(
     data:MappedPlayerDataCollection, 
     data_difference:MappedPlayerDataCollection = None,
     timestamp:float = 0.0, 
@@ -117,18 +121,14 @@ def generate_html_from_data(
         'rows': rows,
     }
     
-    if test:
-        output_file = 'tests/' + output_file
-    
-    output_file = html.create_page_from_template(
-        template_path='docs/main-page.template.html',
+    return stuff_to_html_templates(
+        template='docs/main-page.template.html',
         output_path=output_file,
-        **replacements
+        test=test,
+        **replacements,
     )
-    
-    return output_file
 
-def generate_page_from_dates(
+def gather_player_data(
     base_date = datetime.now(),
     compare_date_offset = 1,
     output_file = 'docs/index.html',
@@ -150,9 +150,9 @@ def generate_page_from_dates(
         print('Cannot get comparison data as of now.')
         return
     
-    file_name = generate_html_from_data(
+    file_name = generate_html_from_player_data(
         data=latest_mapped_data, 
-        data_difference=data_difference, 
+        data_difference=data_difference,
         test=test, 
         timestamp=latest_data_timestamp,
         output_file = output_file,
@@ -160,7 +160,12 @@ def generate_page_from_dates(
     
     print(file_name)
 
-def main(country:str='PH', mode:str='fruits', option:str='yesterday', test:bool=False) -> None:
+def make_players_list_page(
+    country: str = 'PH',
+    mode: str = 'fruits',
+    option: str = 'yesterday',
+    test: bool = False
+) -> None:
     options = {
         # (timedelta, file_name_output)
         # TODO: make the base dir only a single instance
@@ -178,12 +183,114 @@ def main(country:str='PH', mode:str='fruits', option:str='yesterday', test:bool=
         print('Pick a valid option. [yesterday, week, monthly]')
         return
 
-    generate_page_from_dates(
+    gather_player_data(
         base_date=datetime.now(),
         compare_date_offset=day_offset,
         country=country, mode=mode, test=test,
         output_file=output_file
     )
+
+def stuff_to_html_templates(
+    template: str,
+    output_path: str,
+    test: bool,
+    **variables,
+) -> str:
+    if test:
+        output_path = 'tests/' + output_path
+    
+    output_file = html.create_page_from_template(
+        template_path=template,
+        output_path=output_path,
+        **variables
+    )
+    
+    return output_file
+
+def generate_html_from_pp_data(
+    data: MappedScoreDataCollection,
+    test: bool = False,
+) -> None:
+    def td(content):
+        return html.elem('td', str(content))
+    
+    rows = []
+    
+    for i in data:
+        # im too lazy to type more
+        d: MappedScoreData = data[i]
+        
+        pp = td(d['score_pp'])
+        player = td(d['user_name'])
+        song = td(d['beatmapset_title'])
+        diff = td(d['beatmap_version'])
+        sr = td(d['beatmap_difficulty'])
+        acc = td(round(d['accuracy'] * 100))
+        miss = td(d['count_miss'])
+        mods = td(d['score_mods'])
+        
+        rows.append(html.table_row(
+            pp,player,song,diff,sr,acc,miss,mods
+        ))
+    
+    return stuff_to_html_templates(
+        template='docs/pp-list.template.html',
+        output_path='docs/pp-rankings.html',
+        test=test,
+        title='PP rankings for the day',
+        rows='\n'.join(rows),
+    )
+    
+def make_pp_records_page(
+    country: str = 'PH',
+    mode: str = 'fruits',
+    test: bool = False,
+) -> None:
+    latest_timestamp = datetime.now()
+    
+    raw_scores = get_data_at_date(
+        date=latest_timestamp.strftime('%Y/%m/%d'),
+        country=country,
+        mode=mode,
+        file_type='pp-records',
+        test=test,
+    )
+    
+    if raw_scores is None:
+        print('Cannot get pp score list at the moment.')
+        return
+    
+    mapped_scores: MappedScoreDataCollection = map_player_data(raw_scores)
+    
+    generate_html_from_pp_data(data=mapped_scores, test=test)
+
+def run(
+    country: str = 'PH',
+    mode: str = 'fruits',
+    option: str = 'yesterday',
+    test: bool = False,
+    skip_list: bool = False,
+    skip_pp: bool = False,
+) -> None:
+    
+    if not skip_list:
+        make_players_list_page(
+            country=country,
+            mode=mode,
+            option=option,
+            test=test
+        )
+    else:
+        print('Skipping making the player list.')
+    
+    if not skip_pp:
+        make_pp_records_page(
+            country=country,
+            mode=mode,
+            test=test
+        )
+    else:
+        print('Skipping making the pp records list.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate page from fetched data, requires leaderboard_scrape.py to be ran first!')
@@ -192,7 +299,16 @@ if __name__ == '__main__':
     parser.add_argument('--country', type=str, default='PH', help='What country to make a page from. Uses 2 letter country codes.')
     parser.add_argument('--range', type=str, default='yesterday', help='What would be the comparison date to be done.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
+    parser.add_argument('--skip-list', action='store_true')
+    parser.add_argument('--skip-pp', action='store_true')
     
     args = parser.parse_args()
     
-    main(country=args.country, mode=args.mode, option=args.range, test=args.test)
+    run(
+        country=args.country,
+        mode=args.mode,
+        option=args.range,
+        test=args.test,
+        skip_list=args.skip_list,
+        skip_pp=args.skip_pp
+    )
