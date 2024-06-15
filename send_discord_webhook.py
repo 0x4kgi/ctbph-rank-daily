@@ -357,16 +357,20 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
 
         return '\n'.join([ player_info, map_info, score_statistics ])
 
-    description:str = ''
+    description:str = 'Visit the link above for the top 100 (bare bones for now)\n\n'
 
     for index, scr in enumerate(scores):
         description += formatter(index, scr)
     
+    date = datetime.now().strftime('%Y-%m-%d')
+    
     return embed_maker(
+        title=f'Top 5 pp records for {date}',
+        url='https://0x4kgi.github.io/ctbph-rank-daily/pp-rankings.html',
         description=description,
         color=12891853,
         footer={
-            'text': 'Only ranked submitted plays. Top 100 pp plays page, soon(Tea-Em)'
+            'text': 'Only ranked submitted plays.'
         }
     )
 
