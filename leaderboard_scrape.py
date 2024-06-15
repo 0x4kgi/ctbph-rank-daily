@@ -152,17 +152,27 @@ def format_score_data_from_list(scores: list[Score]) -> list[MappedScoreData]:
         score_list.append({
             'score_id': score.id,
             'score_type': 'old' if len(str(score.id)) < 10 else 'new',
-            #'score_mode': _mode[score.mode_int],
+            #'score_mode': _mode[score.mode_int], # since the mode is in the json
             'score_mods': str(score.mods),
             'score_pp': score.pp,
+            'score_grade': str(score.rank).split('.')[-1],
             
             'user_id': score.user_id,
+            'user_name': score._user.username,
 
-            #'beatmapset_title': score.beatmapset.title,
-            #'beatmap_version': score.beatmap.version,
-
+            'beatmapset_title': score.beatmapset.title,
+            'beatmap_version': score.beatmap.version,
             'beatmap_id': score.beatmap.id,
             'beatmapset_id': score.beatmapset.id,
+            'beatmap_difficulty': score.beatmap.difficulty_rating,
+            
+            'full_combo': score.perfect,
+            'max_combo': score.max_combo,
+            'count_300': score.statistics.count_300,
+            'count_100': score.statistics.count_100,
+            'count_50': score.statistics.count_50,
+            'count_miss': score.statistics.count_miss,
+            'accuracy': score.accuracy,
         })
     
     return score_list
@@ -178,10 +188,10 @@ def get_pp_plays(
 
     # temporarily using the function, until i placed this on a module
     def sort_scores_by_pp(
-        scores:list[Score],
-        top=10,
-        min_date:datetime=0,
-        max_date:datetime=datetime.now().timestamp(),
+        scores: list[Score],
+        top: int =10,
+        min_date: float = 0,
+        max_date: float = datetime.now().timestamp(),
     ) -> list[Score]:
         
         def score_filter(score:Score) -> bool:
@@ -243,9 +253,21 @@ def get_pp_plays(
         'score_type',
         'score_mods',
         'score_pp',
+        'score_grade',
         'user_id',
+        'user_name',
+        'beatmapset_title',
+        'beatmap_version',
         'beatmap_id',
         'beatmapset_id',
+        'beatmap_difficulty',
+        'full_combo',
+        'max_combo',
+        'count_300',
+        'count_100',
+        'count_50',
+        'count_miss',
+        'accuracy',
     ]
     values_key = 'score_id'
 

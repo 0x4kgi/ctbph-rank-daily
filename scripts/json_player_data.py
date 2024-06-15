@@ -41,17 +41,44 @@ class MappedScoreData(TypedDict):
     score_type: str
     score_mods: str
     score_pp: float
+    score_grade: str
     user_id: int
+    user_name: str
+    beatmapset_title: str
+    beatmap_version: str
     beatmap_id: int
     beatmapset_id: int
+    beatmap_difficulty: float
+    full_combo: bool
+    max_combo: int
+    count_300: int
+    count_100: int
+    count_50: int
+    count_miss: int
+    accuracy: float
     ```
     """
     score_type: str
     score_mods: str
     score_pp: float
+    score_grade: str
+    
     user_id: int
+    user_name: str
+    
+    beatmapset_title: str
+    beatmap_version: str
     beatmap_id: int
     beatmapset_id: int
+    beatmap_difficulty: float
+    
+    full_combo: bool
+    max_combo: int
+    count_300: int
+    count_100: int
+    count_50: int
+    count_miss: int
+    accuracy: float
 
 class MappedPlayerDataCollection(TypedDict):
     """A collection of player data that includes the player id
@@ -68,10 +95,10 @@ class MappedPlayerDataCollection(TypedDict):
     
     Using `.get()` should return `MappedPlayerData`
     """
-    __getitem__: dict[str, MappedPlayerData]
+    __getitem__: MappedPlayerData
 
 class MappedScoreDataCollection(TypedDict):
-    __getitem__: dict[str, MappedScoreData]
+    __getitem__: MappedScoreData
 class RawPlayerDataCollection(TypedDict):
     """Object type when getting the contents of the json data file
     ```
