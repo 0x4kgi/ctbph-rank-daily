@@ -214,23 +214,33 @@ def generate_html_from_pp_data(
     def td(content):
         return html.elem('td', str(content))
     
+    def img(user_id):
+        return html.elem(
+            'img',
+            src=f'https://a.ppy.sh/{user_id}',
+            loading='lazy'
+        )
+    
     rows = []
     
     for i in data:
         # im too lazy to type more
         d: MappedScoreData = data[i]
         
-        pp = td(d['score_pp'])
+        pp = td(round(d['score_pp'], 2))
+        avatar = td(img(d['user_id']))
         player = td(d['user_name'])
+        grade = td(d['score_grade'])
         song = td(d['beatmapset_title'])
         diff = td(d['beatmap_version'])
         sr = td(d['beatmap_difficulty'])
-        acc = td(round(d['accuracy'] * 100))
+        acc = td(round(d['accuracy'] * 100, 2))
+        combo = td(d['max_combo'])
         miss = td(d['count_miss'])
         mods = td(d['score_mods'])
         
         rows.append(html.table_row(
-            pp,player,song,diff,sr,acc,miss,mods
+            pp,avatar,player,grade,song,diff,sr,acc,combo,miss,mods
         ))
     
     return stuff_to_html_templates(
