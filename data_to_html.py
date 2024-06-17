@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from scripts.json_player_data import (
     MappedPlayerDataCollection,
     MappedScoreData,
@@ -12,6 +13,7 @@ from scripts.json_player_data import (
 import argparse
 import scripts.general_utils as util
 import scripts.html_utils as html
+from scripts.logging_config import setup_logging
 
 def generate_html_from_player_data(
     data:MappedPlayerDataCollection, 
@@ -143,11 +145,11 @@ def gather_player_data(
     latest_data_timestamp = processed_data.latest_data_timestamp
     
     if latest_mapped_data is None:
-        print('Cannot get latest data as of now.')
+        logger.info('Cannot get latest data as of now.')
         return
     
     if comparison_mapped_data is None:
-        print('Cannot get comparison data as of now.')
+        logger.info('Cannot get comparison data as of now.')
         return
     
     file_name = generate_html_from_player_data(
@@ -157,8 +159,6 @@ def gather_player_data(
         timestamp=latest_data_timestamp,
         output_file = output_file,
     )
-    
-    print(file_name)
 
 def make_players_list_page(
     country: str = 'PH',
@@ -180,7 +180,7 @@ def make_players_list_page(
     day_offset, output_file = options.get(option, None)
 
     if day_offset is None:
-        print('Pick a valid option. [yesterday, week, monthly]')
+        logger.warning('Pick a valid option. [yesterday, week, monthly]')
         return
 
     gather_player_data(
@@ -267,7 +267,7 @@ def make_pp_records_page(
     )
     
     if raw_scores is None:
-        print('Cannot get pp score list at the moment.')
+        logger.info('Cannot get pp score list at the moment.')
         return
     
     mapped_scores: MappedScoreDataCollection = map_player_data(raw_scores)
@@ -291,7 +291,7 @@ def run(
             test=test
         )
     else:
-        print('Skipping making the player list.')
+        logger.info('Skipping making the player list.')
     
     if not skip_pp:
         make_pp_records_page(
@@ -300,7 +300,7 @@ def run(
             test=test
         )
     else:
-        print('Skipping making the pp records list.')
+        logger.info('Skipping making the pp records list.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate page from fetched data, requires leaderboard_scrape.py to be ran first!')
@@ -313,6 +313,11 @@ if __name__ == '__main__':
     parser.add_argument('--skip-pp', action='store_true')
     
     args = parser.parse_args()
+
+    if args.test:
+        logger = setup_logging(level=logging.DEBUG)
+    else:
+        logger = setup_logging()
     
     run(
         country=args.country,
