@@ -109,8 +109,11 @@ def dump_to_file(
     test: bool = False,
     formatted: bool = False,
 ) -> str:
-    mode = data['mode']
-    country = data['country']
+    mode = data.get('mode', None)
+    country = data.get('country', None)
+
+    if mode is None or country is None:
+        print('!! Warning: mode or country is none...')
 
     file_type = data.get('type', None)
     
@@ -223,10 +226,10 @@ def get_pp_plays(
 
     if processed_data.latest_mapped_data is None:
         print('No latest data for comparison')
-        return
+        return None
     if processed_data.comparison_mapped_data is None:
         print('No old data for comparison')
-        return
+        return None
     
     active_players = get_sorted_dict_on_stat(
         data=processed_data.data_difference,
@@ -274,7 +277,7 @@ def get_pp_plays(
     values_key = 'score_id'
 
     full_data = {
-        'file_version': 1.01,
+        'file_version': 1.011,
         'update_date': time.time(),
         'type': 'pp-records',
         'mode': mode,
@@ -310,6 +313,11 @@ def run(
     if not skip_pp_plays:
         # Get active players, based on playcount
         pp_data = get_pp_plays(mode=mode, country=country, test=test)
+
+        if pp_data is None:
+            print('Incomplete data for pp listing, skipping gathering of pp plays')
+            return
+
         output_file = dump_to_file(data=pp_data, test=test, formatted=formatted)
         print(output_file)
     else:
