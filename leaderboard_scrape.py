@@ -1,6 +1,8 @@
 from datetime import datetime
+import logging
 from dotenv import load_dotenv
 from ossapi import Ossapi, GameMode, RankingType, Score, models
+from scripts.logging_config import setup_logging
 import json, time, argparse, re, os
 
 from scripts.json_player_data import (
@@ -100,7 +102,7 @@ def get_rankings(
             full_data['data'][uid] = values
         
         fetch_duration = time.time() - fetch_start_time
-        print(f'c: {country} m: {mode} c/f: {page+1}/{pages} OK: {fetch_duration:.4f}s')
+        logger.info(f'c: {country} m: {mode} c/f: {page+1}/{pages} OK: {fetch_duration:.4f}s')
 
     return full_data
 
@@ -113,7 +115,7 @@ def dump_to_file(
     country = data.get('country', None)
 
     if mode is None or country is None:
-        print('!! Warning: mode or country is none...')
+        logger.warning('mode or country is None')
 
     file_type = data.get('type', None)
     
@@ -193,11 +195,12 @@ def get_pp_plays(
     # temporarily using the function, until i placed this on a module
     def sort_scores_by_pp(
         scores: list[Score],
-        top: int =10,
+        top: int = 10,
         min_date: float = 0,
         max_date: float = datetime.now().timestamp(),
     ) -> list[Score]:
-        
+        logger.debug(msg=f'ARGS: {top=} {min_date=} {max_date=}')
+
         def score_filter(score:Score) -> bool:
             timestamp = score.created_at.timestamp()
             if score.pp is None:
@@ -225,10 +228,10 @@ def get_pp_plays(
     )
 
     if processed_data.latest_mapped_data is None:
-        print('No latest data for comparison')
+        logger.info('No latest data for comparison')
         return None
     if processed_data.comparison_mapped_data is None:
-        print('No old data for comparison')
+        logger.info('No old data for comparison')
         return None
     
     active_players = get_sorted_dict_on_stat(
@@ -240,7 +243,7 @@ def get_pp_plays(
     scores:list[Score] = []
     
     for user_id in active_players:
-        print('Fetching scores for', active_players[user_id]['ign'], '...')
+        logger.debug(f'Fetching scores for {active_players[user_id]['ign']}...')
         # temporarily using the function, until i placed this on a module
         user_scores = get_recent_plays_of_user(
             api=api,
@@ -306,22 +309,22 @@ def run(
         # Gather player rankings
         data = get_rankings(mode=mode, country=country, pages=pages)
         output_file = dump_to_file(data=data, test=test, formatted=formatted)
-        print(output_file)
+        logger.info(msg=f'Ranking HTML created at: {output_file}')
     else:
-        print('Skipping gathering of rankings')
+        logger.info('Skipping gathering of rankings')
 
     if not skip_pp_plays:
         # Get active players, based on playcount
         pp_data = get_pp_plays(mode=mode, country=country, test=test)
 
         if pp_data is None:
-            print('Incomplete data for pp listing, skipping gathering of pp plays')
+            logger.info('Incomplete data for pp listing, skipping gathering of pp plays')
             return
 
         output_file = dump_to_file(data=pp_data, test=test, formatted=formatted)
-        print(output_file)
+        logger.info(msg=f'pp plays HTML created at: {output_file}')
     else:
-        print('Skipping gathering of pp plays')
+        logger.info('Skipping gathering of pp plays')
 
 if __name__ == '__main__':
     load_dotenv()
@@ -338,6 +341,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    name = 'leaderboard_scrape'
+    if args.test:
+        logger = setup_logging(level=logging.DEBUG)
+    else:
+        logger = setup_logging()
+
     mode_map = {
         '0': 'osu', 'osu': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',
         '1': 'taiko', 'taiko': 'taiko', 'taco': 'taiko', 't': 'taiko',
@@ -346,9 +355,9 @@ if __name__ == '__main__':
     }
     mode = mode_map.get(args.mode)
     if mode is None:
-        print(f'This mode: "{args.mode}" is not a valid one. Try again')
+        logger.warning(f'This mode: "{args.mode}" is not a valid one. Try again')
         exit()
-    
+
     run(
         mode=mode,
         country=args.country,
