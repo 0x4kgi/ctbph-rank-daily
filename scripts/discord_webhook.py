@@ -1,6 +1,7 @@
 import os
 import requests
 from typing import TypedDict, NotRequired
+from scripts.logging_config import logger
 
 class EmbedAuthor(TypedDict):
     name: NotRequired[str]
@@ -57,7 +58,7 @@ def send_webhook(
     webhook_url = os.getenv('WEBHOOK_URL')
 
     if webhook_url is None:
-        print('No webhook url found. Not sending anything.')
+        logger.error('No webhook url found. Not sending anything.')
         return
 
     payload = {
@@ -73,6 +74,6 @@ def send_webhook(
     )
 
     if response.status_code == 204:
-        print(f'Webhook sent. [[ {username} ]]')
+        logger.info(f'Webhook sent. [[ {username} ]]')
     else:
-        print(f'Failed to send webhook. Status code: {response.status_code}')
+        logger.error(f'Failed to send webhook. Status code: {response.status_code}')

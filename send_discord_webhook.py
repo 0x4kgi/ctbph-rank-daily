@@ -1,3 +1,4 @@
+import logging
 from ossapi import GameMode, Ossapi, Score, User
 from datetime import datetime
 from dotenv import load_dotenv
@@ -19,6 +20,8 @@ from scripts.json_player_data import (
 
 import argparse, os, math
 
+from scripts.logging_config import setup_logging, logger
+
 def get_pp_pb_place_from_weight(weight:float) -> int:
     base = 0.95
     factor = 100
@@ -29,7 +32,7 @@ def get_pp_pb_place_from_weight(weight:float) -> int:
     return round(n)
 
 def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> list[Score]:
-    print('recent plays: ', user_id, type, limit)
+    logger.debug(f'recent plays: {user_id}, {type}, {limit}')
     data = api.user_scores(
         user_id,
         type,
@@ -37,7 +40,7 @@ def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> l
         mode=GameMode.CATCH,
         include_fails=False
     )
-    print('# of plays: ', len(data))
+    logger.debug(f'# of plays: {len(data)}')
     return data
 
 def get_user_info(api:Ossapi, user_id) -> User:
@@ -392,7 +395,7 @@ def send_play_pp_ranking_webhook(
     )
     
     if raw_scores is None:
-        print('Cannot get pp score list at the moment.')
+        logger.info('Cannot get pp score list at the moment.')
         return
     
     # Map the scores to a dict
@@ -413,7 +416,7 @@ def send_play_pp_ranking_webhook(
     
     # end early if no scores are to be found
     if len(scores) == 0:
-        print('No scores to be listed. :(')
+        logger.info('No scores to be listed. :(')
         return
     
     # make the list of the top 10 as a separate webhook
@@ -450,11 +453,11 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     data_difference = processed_data.data_difference
     
     if latest_mapped_data is None:
-        print('Cannot get latest data as of now.')
+        logger.info('Cannot get latest data as of now.')
         return
     
     if comparison_mapped_data is None:
-        print('Cannot get comparison data as of now.')
+        logger.info('Cannot get comparison data as of now.')
         return
     
     send_activity_ranking_webhook(
@@ -480,6 +483,11 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true', help='Just do tests')
     
     args = parser.parse_args()
+
+    if args.test:
+        setup_logging(level=logging.DEBUG)
+    else:
+        setup_logging()
     
     load_dotenv()
     

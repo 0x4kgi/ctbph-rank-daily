@@ -1,4 +1,5 @@
 import os
+from scripts.logging_config import logger
 
 def elem(
     tag_name: str,
@@ -116,10 +117,10 @@ def create_page_from_template(
         with open(template_path) as file:
             html_template = file.read()
     except OSError:
-        print('Supplied template does not exist.')
+        logger.warning('Supplied template does not exist.')
         return None
     except:
-        print('Unexpected error occured')
+        logger.error('Unexpected error occured')
         return None
 
     for var in variables:
@@ -133,7 +134,7 @@ def create_page_from_template(
     with open(output_path, 'w') as file:
         file.write(html_template)
 
-    print('Created html file at: ' + full_output_path)
+    logger.info('Created html file at: ' + output_path)
     return full_output_path
 
 if __name__ == '__main__':

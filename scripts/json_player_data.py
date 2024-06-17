@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import Optional, TypedDict
+from scripts.logging_config import logger
 import json, os
 
 class MappedPlayerData(TypedDict):
@@ -99,6 +100,7 @@ class MappedPlayerDataCollection(TypedDict):
 
 class MappedScoreDataCollection(TypedDict):
     __getitem__: MappedScoreData
+
 class RawPlayerDataCollection(TypedDict):
     """Object type when getting the contents of the json data file
     ```
@@ -135,6 +137,7 @@ def sort_data_dictionary(
     Returns:
         dict: The mapped player data, now sorted to specified key.
     """
+    logger.debug(f'sorting dict with {key=}')
     return dict(
         sorted(data.items(), key=lambda x: x[1].get(key, 0), reverse=reversed)
     )
@@ -154,6 +157,7 @@ def get_sorted_dict_on_stat(
     Returns:
         dict[str, dict[str, str|int|float]]: Sorted and filtered mapped player data
     """
+    logger.debug(f'sorting dict with {stat=}')
     return {
         i: data[i]
         for i in sort_data_dictionary(data, stat, highest_first)
@@ -175,9 +179,9 @@ def get_json(file_path: str, test: bool) -> dict:
     if test:
         file_path = 'tests/' + file_path
 
-    file_path = os.path.join(current_dir, '../' + file_path)
+    logger.debug(f'trying to get {file_path}...')
     
-    print(f'Trying to get {file_path}...')
+    file_path = os.path.join(current_dir, '../' + file_path)
     
     try:
         with open(file_path) as file:
@@ -259,7 +263,7 @@ def map_player_data(data:RawPlayerDataCollection) -> MappedPlayerDataCollection|
     
     map = data['map']
     player_data = data['data']
-    
+
     for player in player_data:
         decoded_data[player] = {
             map[i]: player_data[player][i] 

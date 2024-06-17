@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 from dotenv import load_dotenv
 from ossapi import Ossapi, GameMode, RankingType, Score, models
-from scripts.logging_config import setup_logging
+from scripts.logging_config import setup_logging, logger
 import json, time, argparse, re, os
 
 from scripts.json_player_data import (
@@ -199,8 +199,6 @@ def get_pp_plays(
         min_date: float = 0,
         max_date: float = datetime.now().timestamp(),
     ) -> list[Score]:
-        logger.debug(msg=f'ARGS: {top=} {min_date=} {max_date=}')
-
         def score_filter(score:Score) -> bool:
             timestamp = score.created_at.timestamp()
             if score.pp is None:
@@ -341,11 +339,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    name = 'leaderboard_scrape'
     if args.test:
-        logger = setup_logging(level=logging.DEBUG)
+        setup_logging(level=logging.DEBUG)
     else:
-        logger = setup_logging()
+        setup_logging()
 
     mode_map = {
         '0': 'osu', 'osu': 'osu', 'std': 'osu', 'standard': 'osu', 's': 'osu',

@@ -17,7 +17,8 @@ def setup_logging(
     # https://docs.python.org/3/library/logging.html#formatter-objects
     # https://docs.python.org/3/library/logging.html#logrecord-attributes
     formatter = logging.Formatter(
-        fmt='[{levelname:<7}] ({filename}:{lineno}:{funcName}) >> {message}',
+        # fmt='[{levelname:<7}] {message} ({filename}:{lineno}:{funcName})',
+        fmt='{filename}:{lineno}\t- {levelname:<8} - {message}',
         style='{'
     )
     ch.setFormatter(fmt=formatter)
@@ -27,3 +28,5 @@ def setup_logging(
     logger.addHandler(ch)
 
     return logger
+
+logger = setup_logging()
