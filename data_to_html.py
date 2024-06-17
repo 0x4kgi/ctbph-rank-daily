@@ -166,6 +166,7 @@ def make_players_list_page(
     option: str = 'yesterday',
     test: bool = False
 ) -> None:
+    logger.info('Starting making player list page')
     options = {
         # (timedelta, file_name_output)
         # TODO: make the base dir only a single instance

@@ -33,6 +33,10 @@ def get_pp_pb_place_from_weight(weight:float) -> int:
 
 def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> list[Score]:
     logger.debug(f'recent plays: {user_id}, {type}, {limit}')
+    
+    if limit > 100:
+        logger.warning(f'some plays might not be gathered for this player ({user_id})')
+    
     data = api.user_scores(
         user_id,
         type,
@@ -395,7 +399,7 @@ def send_play_pp_ranking_webhook(
     )
     
     if raw_scores is None:
-        logger.info('Cannot get pp score list at the moment.')
+        logger.warning('Cannot get pp score list at the moment.')
         return
     
     # Map the scores to a dict
@@ -416,7 +420,7 @@ def send_play_pp_ranking_webhook(
     
     # end early if no scores are to be found
     if len(scores) == 0:
-        logger.info('No scores to be listed. :(')
+        logger.warning('No scores to be listed. :(')
         return
     
     # make the list of the top 10 as a separate webhook
@@ -453,13 +457,14 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     data_difference = processed_data.data_difference
     
     if latest_mapped_data is None:
-        logger.info('Cannot get latest data as of now.')
+        logger.warning('Cannot get latest data as of now.')
         return
     
     if comparison_mapped_data is None:
-        logger.info('Cannot get comparison data as of now.')
+        logger.warning('Cannot get comparison data as of now.')
         return
     
+    logger.info('Making the activity webhook')
     send_activity_ranking_webhook(
         latest_mapped_data=latest_mapped_data,
         comparison_mapped_data=comparison_mapped_data,
@@ -467,6 +472,7 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         latest_date=latest_date,
     )
     
+    logger.info('Making the pp related webhook')
     send_play_pp_ranking_webhook(
         api=api,
         latest_timestamp=latest_date,
