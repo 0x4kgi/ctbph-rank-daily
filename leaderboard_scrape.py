@@ -171,6 +171,7 @@ def format_score_data_from_list(scores: list[Score]) -> list[MappedScoreData]:
             'count_300': score.statistics.count_300,
             'count_100': score.statistics.count_100,
             'count_50': score.statistics.count_50,
+            'count_droplet_miss': score.statistics.count_katu,
             'count_miss': score.statistics.count_miss,
             'accuracy': score.accuracy,
         })
@@ -266,6 +267,7 @@ def get_pp_plays(
         'count_300',
         'count_100',
         'count_50',
+        'count_droplet_miss',
         'count_miss',
         'accuracy',
     ]
