@@ -26,13 +26,6 @@ def setup_logging(
 ) -> logging.Logger:
     # Assisited by ChatGPT(tm)
 
-    # this is for file logging
-    logging.basicConfig(
-        filename='tests/log.log',
-        format='{asctime} {levelname:<8} {name} {filename}:{lineno} - {message} "@{funcName}"',
-        style='{',
-    )
-
     logger = logging.getLogger(name='ctbph-rank-daily')
     logger.setLevel(level=level)
 
