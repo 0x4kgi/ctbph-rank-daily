@@ -303,16 +303,18 @@ def run(
     skip_pp_plays: bool = False,
     skip_rankings: bool = False,
 ) -> None:
+    logger.info(f'running main method, {skip_pp_plays=} {skip_rankings=}')
+    
     if not skip_rankings:
         # Gather player rankings
         data = get_rankings(mode=mode, country=country, pages=pages)
         output_file = dump_to_file(data=data, test=test, formatted=formatted)
-        logger.info(msg=f'Ranking HTML created at: {output_file}')
+        logger.info(msg=f'Ranking json created at: {output_file}')
     else:
         logger.info('Skipping gathering of rankings')
 
     if not skip_pp_plays:
-        # Get active players, based on playcount
+        # Get active players, based on play count
         pp_data = get_pp_plays(mode=mode, country=country, test=test)
 
         if pp_data is None:
@@ -320,7 +322,7 @@ def run(
             return
 
         output_file = dump_to_file(data=pp_data, test=test, formatted=formatted)
-        logger.info(msg=f'pp plays HTML created at: {output_file}')
+        logger.info(msg=f'pp plays json created at: {output_file}')
     else:
         logger.info('Skipping gathering of pp plays')
 
