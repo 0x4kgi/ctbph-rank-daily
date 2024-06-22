@@ -230,7 +230,7 @@ def generate_html_from_pp_data(
     rows = []
 
     for i in data:
-        # im too lazy to score_type more
+        # im too lazy to type more
         d: MappedScoreData = data[i]
 
         pp = td(round(d['score_pp'], 2))

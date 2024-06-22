@@ -110,7 +110,7 @@ class MappedScoreDataCollection(TypedDict):
 
 
 class RawPlayerDataCollection(TypedDict):
-    """Object score_type when getting the contents of the json data file
+    """Object type when getting the contents of the json data file
     ```
     file_version: Optional[int]
     file_type: Optional[str]
@@ -221,7 +221,7 @@ def get_data_at_date(
         date (str): The date, in YYYY/MM/DD format
         country (str): Uses 2 letter country code
         mode (str): osu/taiko/fruits/mania
-        file_type (str, optional): specifies the file score_type to get, this is just getting appended to the end
+        file_type (str, optional): specifies the file type to get, this is just getting appended to the end
         test (bool, optional): Uses files in tests/ to avoid cluttering up main files. Defaults to False.
 
     Returns:

@@ -130,7 +130,7 @@ def dump_to_file(
     if mode is None or country is None:
         logger.warning('mode or country is None')
 
-    file_type = data.get('score_type', None)
+    file_type = data.get('type', None)
 
     today = datetime.now()
     date_string = today.strftime('%Y/%m/%d')
@@ -299,7 +299,7 @@ def get_pp_plays(
     full_data: RawPlayerDataCollection = {
         'file_version': 1.011,
         'update_date': time.time(),
-        'score_type': 'pp-records',
+        'type': 'pp-records',
         'mode': mode,
         'country': country if country else 'all',
         'map': value_mapping,
