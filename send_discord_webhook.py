@@ -1,7 +1,12 @@
+import argparse
 import logging
-from ossapi import GameMode, Ossapi, Score, User
+import math
+import os
 from datetime import datetime
+
 from dotenv import load_dotenv
+from ossapi import GameMode, Ossapi, Score, User
+from ossapi.enums import Grade
 
 from scripts.discord_webhook import (
     Embed,
@@ -17,12 +22,10 @@ from scripts.json_player_data import (
     get_sorted_dict_on_stat,
     map_player_data,
 )
-
-import argparse, os, math
-
 from scripts.logging_config import setup_logging, logger
 
-def get_pp_pb_place_from_weight(weight:float) -> int:
+
+def get_pp_pb_place_from_weight(weight: float) -> int:
     base = 0.95
     factor = 100
     ln_base = math.log(base)
@@ -31,15 +34,16 @@ def get_pp_pb_place_from_weight(weight:float) -> int:
     n = n_minus_1 + 1
     return round(n)
 
-def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> list[Score]:
-    logger.debug(f'recent plays: {user_id}, {type}, {limit}')
-    
+
+def get_recent_plays_of_user(api: Ossapi, user_id, score_type: str = 'best', limit=5) -> list[Score]:
+    logger.debug(f'recent plays: {user_id}, {score_type}, {limit}')
+
     if limit > 100:
         logger.warning(f'some plays might not be gathered for this player ({user_id})')
-    
+
     data = api.user_scores(
         user_id,
-        type,
+        score_type,
         limit=limit,
         mode=GameMode.CATCH,
         include_fails=False
@@ -47,12 +51,14 @@ def get_recent_plays_of_user(api:Ossapi, user_id, type:str='best', limit=5) -> l
     logger.debug(f'# of plays: {len(data)}')
     return data
 
-def get_user_info(api:Ossapi, user_id) -> User:
+
+def get_user_info(api: Ossapi, user_id) -> User:
     return api.user(user_id, mode=GameMode.CATCH)
+
 
 def simplify_number(num):
     """
-    ChatGPT code, i got too lazy.
+    ChatGPT code, I got too lazy.
     
     Simplifies a number by adding appropriate suffixes (k, M, B, T) for thousands, millions, billions, and trillions.
     
@@ -64,19 +70,20 @@ def simplify_number(num):
     """
     suffixes = ['', 'k', 'M', 'B', 'T']
     magnitude = 0
-    
+
     # Determine the magnitude
     while abs(num) >= 1000 and magnitude < len(suffixes) - 1:
         magnitude += 1
         num /= 1000.0
-    
+
     # Format the number with the appropriate suffix
     if magnitude == 0:
         return f"{num:.0f}"
     else:
         return f"{num:.2f}{suffixes[magnitude]}"
 
-def get_emote_for_score_grade(grade:str) -> str:
+
+def get_emote_for_score_grade(grade: Grade | str) -> str:
     ranks_dict = {
         'SSH': '<:rankingXH:1247443556881399848>',
         'SS': '<:rankingX:1247443458596274278>',
@@ -90,13 +97,14 @@ def get_emote_for_score_grade(grade:str) -> str:
     grade = str(grade).split('.')[-1]
     return ranks_dict.get(grade, '?')
 
-def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
+
+def create_embed_from_play(api: Ossapi, data: Score) -> Embed:
     user = get_user_info(api, data.user_id)
-    
+
     osu_username = user.username
     osu_avatar = user.avatar_url
     osu_url = f'https://osu.ppy.sh/users/{user.id}'
-    user_pp = round(user.statistics.pp,0)
+    user_pp = round(user.statistics.pp, 0)
     ph_rank = user.statistics.country_rank
 
     score = data.statistics
@@ -104,7 +112,7 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
     rank = get_emote_for_score_grade(data.rank)
     mods = str(data.mods)
     score_time = data.created_at.strftime('%Y-%m-%dT%H:%m:%S.%fZ')
-    
+
     embed_data = embed_maker(
         title=data.beatmapset.title + f' [{data.beatmap.version}] [{data.beatmap.difficulty_rating:,.2f}*]',
         description=f'**{rank}** • {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} • {max_combo}x',
@@ -140,14 +148,15 @@ def create_embed_from_play(api:Ossapi, data:Score) -> Embed:
 
     return embed_data
 
+
 # TODO: clean the parameters to avoid adding another one if more stats are shown
 def create_player_summary_fields(
-    pp_gainers,
-    rank_gainers,
-    active_players,
-    ranked_score_gainers,
-    latest_data,
-    comparison_data
+        pp_gainers,
+        rank_gainers,
+        active_players,
+        ranked_score_gainers,
+        latest_data,
+        comparison_data
 ) -> list[EmbedField]:
     def format_field(name, data, formatter, stat, limit=5) -> EmbedField:
         return {
@@ -156,7 +165,7 @@ def create_player_summary_fields(
                 formatter(item) for item in list(data.items())[:limit] if item[1][stat] > 0
             )
         }
-        
+
     def _uid_link(item):
         return item[0], f'https://osu.ppy.sh/users/{item[0]}/fruits'
 
@@ -165,7 +174,7 @@ def create_player_summary_fields(
         old = comparison_data[uid][stat]
         new = latest_data[uid][stat]
         return old, new
-    
+
     # TODO: maybe reduce code repetition here, on the formatters
     def pp_formatter(item):
         uid, link = _uid_link(item)
@@ -187,7 +196,7 @@ def create_player_summary_fields(
         gained = item[1]['play_count']
         old, new = _get_stats(uid, 'play_count')
         return f'1. [**{ign}**]({link}) • {old:,} → {new:,} (+**{gained:,}** plays)'
-    
+
     def rs_formatter(item):
         uid, link = _uid_link(item)
         ign = item[1]['ign']
@@ -201,32 +210,33 @@ def create_player_summary_fields(
     pc_field = format_field('"play more" gamers', active_players, pc_formatter, 'play_count')
     rs_field = format_field('ranked score farmers', ranked_score_gainers, rs_formatter, 'ranked_score')
 
-    return [ pp_field, rank_field, pc_field, rs_field ]
+    return [pp_field, rank_field, pc_field, rs_field]
+
 
 def description_maker(
-    active_players:dict,
-    pp_gainers:dict,
-    rank_gainers:dict,
-    ranked_score_gainers:dict,
+        active_players: dict,
+        pp_gainers: dict,
+        rank_gainers: dict,
+        ranked_score_gainers: dict,
 ) -> str:
     import re
-    
-    def above_zero_count(data:dict, key:str) -> int:
+
+    def above_zero_count(data: dict, key: str) -> int:
         return len([i for i in data.items() if i[1][key] > 0])
-    
+
     def total_stat(data, key) -> int:
         return sum([data[i][key] for i in data if data[i][key] > 0])
-    
+
     # TODO: maybe clean this up too, but this is nothing major anyway
     active_count = above_zero_count(active_players, 'play_count')
     pp_gain_count = above_zero_count(pp_gainers, 'pp')
     rank_gain_count = above_zero_count(rank_gainers, 'country_rank')
-    
+
     total_pc = total_stat(active_players, 'play_count')
     total_pp = total_stat(pp_gainers, 'pp')
     total_rank = total_stat(rank_gainers, 'country_rank')
     total_ranked_score = simplify_number(total_stat(ranked_score_gainers, 'ranked_score'))
-    
+
     # use !n for newlines
     description = """There are: **{:,}** players who farmed,
     **{:,}** players who climbed the PH ranks,
@@ -243,35 +253,37 @@ def description_maker(
         total_pc,
         total_ranked_score,
     )
-    
+
     # weird hack, i know
     description = re.sub(r'\n', ' ', description)
     description = re.sub(r'\s{4,}', ' ', description)
     description = re.sub(r'!n', '\n', description)
-    
+
     return description
 
-def get_new_entries(data:MappedPlayerDataCollection) -> MappedPlayerDataCollection:
+
+# noinspection PyTypedDict
+def get_new_entries(data: MappedPlayerDataCollection) -> MappedPlayerDataCollection:
     return {
         i: data[i]
         for i in data
         if data[i]['new_entry']
     }
 
+
 def send_activity_ranking_webhook(
-    latest_mapped_data:dict,
-    comparison_mapped_data:dict,
-    data_difference:dict,
-    latest_date:datetime=datetime.now(),
+        latest_mapped_data: dict,
+        comparison_mapped_data: dict,
+        data_difference: dict,
+        latest_date: datetime = datetime.now(),
 ) -> None:
-    
     # TODO: this is getting ridiculous, find a way to simplify this
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'country_rank', True)
-    ranked_score_gainers = get_sorted_dict_on_stat(data_difference, 'ranked_score', True)    
+    ranked_score_gainers = get_sorted_dict_on_stat(data_difference, 'ranked_score', True)
     new_entries = get_new_entries(data_difference)
-    
+
     # TODO: clean this up, please holy fuck
     fields = create_player_summary_fields(
         pp_gainers=pp_gainers,
@@ -281,13 +293,13 @@ def send_activity_ranking_webhook(
         latest_data=latest_mapped_data,
         comparison_data=comparison_mapped_data
     )
-    
+
     footer = {
         'text': 'Updates delivered daily at around midnight. Inaccurate data? Blame Eoneru.',
     }
-    
+
     embeds: list[Embed] = []
-    
+
     main_embed = embed_maker(
         title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
         url='https://0x4kgi.github.io/ctbph-rank-daily/',
@@ -302,18 +314,20 @@ def send_activity_ranking_webhook(
         color=12517310
     )
     embeds.append(main_embed)
-    
+
     if len(new_entries) > 0:
         desc = []
         for user_id in new_entries:
             # /fruits should be temporary
             desc.append(f'- [**{new_entries[user_id]['ign']}**](https://osu.ppy.sh/users/{user_id}/fruits)')
-        
-        full_desc = 'There are **{}** new peeps in the Top 1k!\nVisit [the site](https://0x4kgi.github.io/ctbph-rank-daily/) to see where they are. Try looking for ✨\n\nThey are:\n{}'.format(
+
+        full_desc = ('There are **{}** new peeps in the Top 1k!\nVisit [the site]('
+                     'https://0x4kgi.github.io/ctbph-rank-daily/) to see where they are. Try looking for ✨\n\nThey '
+                     'are:\n{}').format(
             len(new_entries),
             '\n'.join(desc)
         )
-        
+
         embeds.append(embed_maker(
             title='New players in the top 1k',
             description=full_desc,
@@ -322,7 +336,7 @@ def send_activity_ranking_webhook(
                 'text': 'This is a rare occurrence, try pulling in your fave gacha, this is a sign!'
             }
         ))
-    
+
     send_webhook(
         content='``` ```',
         embeds=embeds,
@@ -330,8 +344,9 @@ def send_activity_ranking_webhook(
         avatar_url='https://iili.io/JQmQKKl.png'
     )
 
-def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
-    def formatter(index:int, score:Score) -> str:
+
+def create_pp_record_list_embed(scores: list[Score]) -> Embed:
+    def formatter(index: int, score: Score) -> str:
         def miss_format(miss) -> str:
             if miss:
                 return f'{miss:,}❌'
@@ -362,15 +377,15 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
             score.max_combo,
         )
 
-        return '\n'.join([ player_info, map_info, score_statistics ])
+        return '\n'.join([player_info, map_info, score_statistics])
 
-    description:str = 'Visit the link above for the top 100 (bare bones for now)\n\n'
+    description: str = 'Visit the link above for the top 100 (bare bones for now)\n\n'
 
     for index, scr in enumerate(scores):
         description += formatter(index, scr)
-    
+
     date = datetime.now().strftime('%Y-%m-%d')
-    
+
     return embed_maker(
         title=f'Top 5 pp records for {date}',
         url='https://0x4kgi.github.io/ctbph-rank-daily/pp-rankings.html',
@@ -381,13 +396,14 @@ def create_pp_record_list_embed(api:Ossapi, scores:list[Score]) -> Embed:
         }
     )
 
+
 def send_play_pp_ranking_webhook(
-    api:Ossapi,
-    latest_timestamp:datetime,
-    mode:str,
-    country:str,
-    test:bool,
-    top:int=5
+        api: Ossapi,
+        latest_timestamp: datetime,
+        mode: str,
+        country: str,
+        test: bool,
+        top: int = 5
 ) -> None:
     # Get the pp scores from file
     raw_scores = get_data_at_date(
@@ -397,14 +413,14 @@ def send_play_pp_ranking_webhook(
         file_type='pp-records',
         test=test,
     )
-    
+
     if raw_scores is None:
         logger.warning('Cannot get pp score list at the moment.')
         return
-    
+
     # Map the scores to a dict
     mapped_scores: MappedScoreDataCollection = map_player_data(raw_scores)
-    
+
     # get the top 5 only and convert each to a Score object
     # then append to a Score list
     scores: list[Score] = []
@@ -415,33 +431,35 @@ def send_play_pp_ranking_webhook(
             score = api.score_mode(mode, score_id)
         else:
             score = api.score(score_id)
-        
+
         scores.append(score)
-    
+
     # end early if no scores are to be found
     if len(scores) == 0:
         logger.warning('No scores to be listed. :(')
         return
-    
+
     # make the list of the top 10 as a separate webhook
-    pp_list_embed = create_pp_record_list_embed(api, scores)
+    pp_list_embed = create_pp_record_list_embed(scores)
     send_webhook(
         username=f'top {top} pp records of the day',
-        embeds=[ pp_list_embed ],
+        embeds=[pp_list_embed],
         avatar_url='https://iili.io/JmEwJhF.png',
     )
-    
+
     # send the highest pp play
     top_pp_embed = create_embed_from_play(api, scores[0])
     send_webhook(
         username='pp record of the day',
-        embeds=[ top_pp_embed ],
+        embeds=[top_pp_embed],
         avatar_url='https://iili.io/JmEwJhF.png',
     )
 
-def main(country:str='PH', mode:str='fruits', test:bool=False):
+
+def main(country: str = 'PH', mode: str = 'fruits', test: bool = False):
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
+    # noinspection PyTypeChecker
     api = Ossapi(client_id, client_secret)
 
     latest_date = datetime.now()
@@ -455,15 +473,15 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
     latest_mapped_data = processed_data.latest_mapped_data
     comparison_mapped_data = processed_data.comparison_mapped_data
     data_difference = processed_data.data_difference
-    
+
     if latest_mapped_data is None:
         logger.warning('Cannot get latest data as of now.')
         return
-    
+
     if comparison_mapped_data is None:
         logger.warning('Cannot get comparison data as of now.')
         return
-    
+
     logger.info('Making the activity webhook')
     send_activity_ranking_webhook(
         latest_mapped_data=latest_mapped_data,
@@ -471,7 +489,7 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         data_difference=data_difference,
         latest_date=latest_date,
     )
-    
+
     logger.info('Making the pp related webhook')
     send_play_pp_ranking_webhook(
         api=api,
@@ -481,22 +499,26 @@ def main(country:str='PH', mode:str='fruits', test:bool=False):
         test=test,
     )
 
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Send a Discord webhook message from fetched data, requires leaderboard_scrape.py to be ran first!')
-    
-    parser.add_argument('--mode', type=str, default='fruits', help='Define what mode, uses the parameters used on osu site.')
-    parser.add_argument('--country', type=str, default='PH', help='What country to make a webhook message from. Uses 2 letter country codes.')
+    parser = argparse.ArgumentParser(
+        description='Send a Discord webhook message from fetched data, requires leaderboard_scrape.py to be ran first!')
+
+    parser.add_argument('--mode', type=str, default='fruits',
+                        help='Define what mode, uses the parameters used on osu site.')
+    parser.add_argument('--country', type=str, default='PH',
+                        help='What country to make a webhook message from. Uses 2 letter country codes.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
-    
+
     args = parser.parse_args()
 
     if args.test:
         setup_logging(level=logging.DEBUG)
     else:
         setup_logging()
-    
+
     load_dotenv()
-    
+
     main(
         country=args.country,
         mode=args.mode,
