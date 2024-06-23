@@ -50,9 +50,7 @@ def generate_html_from_player_data(
             change = html.elem('sup',
                                '+' if compare > 0 else '',
                                str(compare),
-                               **{
-                                   'class': 'increase' if compare > 0 else 'decrease'
-                               }
+                               **{'class': 'increase' if compare > 0 else 'decrease'}
                                )
 
         if stat in ['acc']:

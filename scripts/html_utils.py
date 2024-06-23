@@ -1,10 +1,11 @@
 import os
 from scripts.logging_config import logger
 
+
 def elem(
-    tag_name: str,
-    *content: str,
-    **attributes: str,
+        tag_name: str,
+        *content: str,
+        **attributes: str,
 ) -> str:
     """Create an HTML element.
     
@@ -33,7 +34,7 @@ def elem(
         <tag_name attributes,/>
         ```
     """
-    
+
     non_closing_tags = [
         'br',
         'hr',
@@ -44,8 +45,8 @@ def elem(
 
     full_content = ''.join(content)
 
-    attrs = ' '.join([ 
-        f'{key}="{value}"' 
+    attrs = ' '.join([
+        f'{key}="{value}"'
         for key, value in attributes.items()
         if value is not None
     ])
@@ -60,9 +61,10 @@ def elem(
     else:
         return f'<{head}>{full_content}</{tag_name}>'
 
+
 def table_row(
-    *td: str,
-    **attributes: str,
+        *td: str,
+        **attributes: str,
 ) -> str:
     """Create a tr element, wrapped as a function for ease
 
@@ -73,13 +75,14 @@ def table_row(
     Returns:
         str: the `tr` element
     """
-    
+
     return elem('tr', *td, **attributes)
 
+
 def create_page_from_template(
-    template_path: str,
-    output_path: str,
-    **variables: str,
+        template_path: str,
+        output_path: str,
+        **variables: str,
 ) -> str | None:
     """Create a page from a template with the supplied variables.
 
@@ -109,7 +112,7 @@ def create_page_from_template(
     Returns:
         str | None: the output path if the operation succeeds, None if otherwise
     """
-    
+
     current_dir = os.path.dirname(__file__)
     template_path = os.path.join(current_dir, '../' + template_path)
 
@@ -136,6 +139,7 @@ def create_page_from_template(
 
     logger.info('Created html file at: ' + output_path)
     return full_output_path
+
 
 if __name__ == '__main__':
     h1_expect = '<h1 id="hhhhh" dumb-attribute="some value">meow quack</h1>'
