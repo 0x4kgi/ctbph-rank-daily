@@ -7,7 +7,7 @@ from scripts.json_player_data import (
     get_comparison_and_mapped_data,
     get_data_at_date,
     get_sorted_dict_on_stat,
-    map_player_data
+    map_player_data, ComparisonAndMappedData
 )
 
 import argparse
@@ -133,32 +133,23 @@ def generate_html_from_player_data(
 def gather_player_data(
         base_date=datetime.now(),
         compare_date_offset=1,
-        output_file='docs/index.html',
         country='PH',
         mode='fruits',
         test=False,
-) -> None:
+) -> ComparisonAndMappedData | None:
     processed_data = get_comparison_and_mapped_data(base_date, compare_date_offset, country, mode, test)
     latest_mapped_data = processed_data.latest_mapped_data
     comparison_mapped_data = processed_data.comparison_mapped_data
-    data_difference = processed_data.data_difference
-    latest_data_timestamp = processed_data.latest_data_timestamp
 
     if latest_mapped_data is None:
         logger.info('Cannot get latest data as of now.')
-        return
+        return None
 
     if comparison_mapped_data is None:
         logger.info('Cannot get comparison data as of now.')
-        return
+        return None
 
-    generate_html_from_player_data(
-        data=latest_mapped_data,
-        data_difference=data_difference,
-        test=test,
-        timestamp=latest_data_timestamp,
-        output_file=output_file,
-    )
+    return processed_data
 
 
 def make_players_list_page(
@@ -185,12 +176,31 @@ def make_players_list_page(
         logger.warning('Pick a valid option. [yesterday, week, monthly]')
         return
 
-    gather_player_data(
+    player_data = gather_player_data(
         base_date=datetime.now(),
         compare_date_offset=day_offset,
         country=country, mode=mode, test=test,
-        output_file=output_file
     )
+
+    if player_data is None:
+        logger.warning('Player data is incomplete, will not make player HTML data.')
+        return
+
+    generate_html_from_player_data(
+        data=player_data.latest_mapped_data,
+        data_difference=player_data.data_difference,
+        timestamp=player_data.latest_data_timestamp,
+        output_file=output_file,
+        test=test,
+    )
+
+
+def make_player_activity_leaderboards_page(
+        player_data: ComparisonAndMappedData,
+        output_file: str,
+        test: bool,
+):
+    pass
 
 
 def stuff_to_html_templates(
