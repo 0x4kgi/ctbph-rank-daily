@@ -270,7 +270,7 @@ def compare_player_data(
             y_stat = y_player.get(stat, 0)
             difference = t_stat - y_stat
 
-            if stat == 'country_rank':
+            if stat in ['country_rank', 'global_rank']:
                 difference = 0 - difference
 
             data[t][stat] = difference
