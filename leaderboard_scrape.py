@@ -143,9 +143,9 @@ def dump_to_file(
         output = re.sub(r'(\d)\s+\]', r'\1]', output3)
 
     if file_type:
-        output_file = f'data/{date_string}/{country}-{mode}-{file_type}.json'
+        output_file = f'docs/data/{date_string}/{country}-{mode}-{file_type}.json'
     else:
-        output_file = f'data/{date_string}/{country}-{mode}.json'
+        output_file = f'docs/data/{date_string}/{country}-{mode}.json'
 
     if test:
         output_file = 'tests/' + output_file
