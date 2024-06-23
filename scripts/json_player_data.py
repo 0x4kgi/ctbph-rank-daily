@@ -231,9 +231,9 @@ def get_data_at_date(
 
     # TODO: maybe do something about this
     if file_type is not None:
-        target_file = f'data/{date}/{country}-{mode}-{file_type}.json'
+        target_file = f'docs/data/{date}/{country}-{mode}-{file_type}.json'
     else:
-        target_file = f'data/{date}/{country}-{mode}.json'
+        target_file = f'docs/data/{date}/{country}-{mode}.json'
 
     return get_json(file_path=target_file, test=test)
 
