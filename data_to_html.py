@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 import logging
 from scripts.json_player_data import (
@@ -196,11 +197,78 @@ def make_players_list_page(
 
 
 def make_player_activity_leaderboards_page(
-        player_data: ComparisonAndMappedData,
-        output_file: str,
+        country: str,
+        mode: str,
         test: bool,
 ):
-    pass
+    player_data = gather_player_data(
+        base_date=datetime.now(),
+        compare_date_offset=1,  # yesterday for now
+        country=country, mode=mode, test=test,
+    )
+
+    if player_data is None:
+        logger.warning('Player data is incomplete, will not make player activity leaderboard page.')
+        return
+
+    stats_list: list[str] = [
+        'country_rank',
+        'global_rank',
+        'pp',
+        'acc',
+        'play_count',
+        'play_time',
+        'ranked_score',
+        'total_hits',
+    ]
+
+    sorted_stats: dict[str, MappedPlayerDataCollection] = {
+        stat: get_sorted_dict_on_stat(
+            data=player_data.data_difference, stat=stat, highest_first=True
+        )
+        for stat in stats_list
+    }
+
+    # this is temporary lol
+    def avatar(user_id) -> str:
+        return html.elem(tag_name='img', **{
+            'src': f'https://a.ppy.sh/{user_id}',
+            'loading': 'lazy'
+        })
+
+    def row(
+            gain: int | float,
+            avatar: str,
+            user_name: str,
+            old: int | float,
+            new: int | float,
+    ) -> str:
+        return html.elem('td',
+                         str(gain),
+                         avatar,
+                         user_name,
+                         str(old),
+                         '→',
+                         str(new)
+                         )
+
+    html_rows: dict[str, list[str]] = {}
+
+    for stat in stats_list:
+        logger.debug('getting the: ' + stat)
+        above_zero = {
+            i: sorted_stats[stat]
+            # looks goofy but it makes sense
+            for i, data in list(sorted_stats[stat].items())[:50]
+            if data[stat] > 0
+        }
+        if len(above_zero) >= 50:
+            logger.warning(f'{stat} hit max limit of 50')
+
+        # TODO: for every item in above_zero, create a row by using the function "row"
+        #       then add them to a list then join that list as a single string before applying
+        #       to the html template
+        rows: list[str] = []
 
 
 def stuff_to_html_templates(
@@ -297,6 +365,7 @@ def run(
         test: bool = False,
         skip_list: bool = False,
         skip_pp: bool = False,
+        skip_activity: bool = False,
 ) -> None:
     if not skip_list:
         make_players_list_page(
@@ -317,6 +386,15 @@ def run(
     else:
         logger.info('Skipping making the pp records list.')
 
+    if not skip_activity:
+        make_player_activity_leaderboards_page(
+            country=country,
+            mode=mode,
+            test=test,
+        )
+    else:
+        logger.info('Skipping making activity leaderboard page.')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -330,6 +408,7 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true', help='Just do tests')
     parser.add_argument('--skip-list', action='store_true')
     parser.add_argument('--skip-pp', action='store_true')
+    parser.add_argument('--skip-activity', action='store_true')
 
     args = parser.parse_args()
 
@@ -344,5 +423,6 @@ if __name__ == '__main__':
         option=args.range,
         test=args.test,
         skip_list=args.skip_list,
-        skip_pp=args.skip_pp
+        skip_pp=args.skip_pp,
+        skip_activity=args.skip_activity,
     )
