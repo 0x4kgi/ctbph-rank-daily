@@ -324,11 +324,11 @@ def get_comparison_and_mapped_data(
         test (bool): Use data from tests/
 
     Returns:
-        tuple[0]: latest mapped data
-        tuple[1]: comparison mapped data
-        tuple[2]: data difference
-        tuple[3]: latest data timestamp
-        tuple[4]: comparison data timestamp
+        tuple[0] latest_mapped_data: latest mapped data
+        tuple[1] comparison_mapped_data: comparison mapped data
+        tuple[2] data_difference: data difference
+        tuple[3] latest_data_timestamp: latest data timestamp
+        tuple[4] comparison_data_timestamp: comparison data timestamp
     """
 
     latest_date = base_date
