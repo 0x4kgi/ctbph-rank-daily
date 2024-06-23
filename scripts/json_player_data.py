@@ -105,6 +105,7 @@ class MappedPlayerDataCollection(TypedDict):
     """
     __getitem__: MappedPlayerData
 
+
 class MappedScoreDataCollection(TypedDict):
     __getitem__: MappedScoreData
 
