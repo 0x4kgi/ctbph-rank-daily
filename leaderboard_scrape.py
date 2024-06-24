@@ -58,12 +58,22 @@ def get_page_rankings(
 
     # noinspection PyTypeChecker
     api = Ossapi(client_id, client_secret)
-    # noinspection PyTypeChecker
-    data = api.ranking(mode, RankingType.PERFORMANCE, country=country, cursor={'page': page})
-
-    page_data = format_data_from_rows(data)
-
-    return page_data
+    
+    retries = 3
+    while retries > 0:
+        try:
+            # noinspection PyTypeChecker
+            data = api.ranking(mode, RankingType.PERFORMANCE, country=country, cursor={'page': page})
+            page_data = format_data_from_rows(data)
+            return page_data
+        except:
+            logger.error(f'Error on getting data for {country}-{mode} page {page}. Retrying in 3s. {retries} left')
+            retries -= 1
+            time.sleep(3)
+    
+    # no more retries
+    logger.error(f'Unable to get data for {country}-{mode}  page {page}. Returning nothing.')
+    return []
 
 
 def get_rankings(
@@ -108,6 +118,10 @@ def get_rankings(
         fetch_start_time = time.time()
 
         page_data = get_page_rankings(page + 1, mode, country)
+
+        if len(page_data) == 0:
+            logger.warning(f'Data for {country}-{mode} page {page} is nothing!')
+            continue
 
         for data in page_data:
             uid, values = encode_to_map(value_mapping, data, values_key)
