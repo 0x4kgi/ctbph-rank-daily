@@ -2,6 +2,7 @@ import argparse
 import logging
 import math
 import os
+import time
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -41,15 +42,25 @@ def get_recent_plays_of_user(api: Ossapi, user_id, score_type: str = 'best', lim
     if limit > 100:
         logger.warning(f'some plays might not be gathered for this player ({user_id})')
 
-    data = api.user_scores(
-        user_id,
-        score_type,
-        limit=limit,
-        mode=GameMode.CATCH,
-        include_fails=False
-    )
-    logger.debug(f'# of plays: {len(data)}')
-    return data
+    retries = 3
+    while retries > 0:
+        try:
+            data = api.user_scores(
+                user_id,
+                score_type,
+                limit=limit,
+                mode=GameMode.CATCH,
+                include_fails=False
+            )
+            logger.debug(f'# of plays: {len(data)}')
+            return data
+        except:
+            logger.error(f'Error on getting data for {user_id}. Retrying in 3s. {retries} left')
+            retries -= 1
+            time.sleep(3)
+
+    logger.error(f'Cannot gather user scores for {user_id}. Returning nothing')
+    return []
 
 
 def get_user_info(api: Ossapi, user_id) -> User:
