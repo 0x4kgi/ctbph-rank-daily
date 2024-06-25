@@ -50,3 +50,27 @@ def get_pp_pb_place_from_weight(weight: float) -> int:
     n_minus_1 = ln_target / ln_base
     n = n_minus_1 + 1
     return round(n)
+
+
+def format_duration(seconds):
+    # chatgpt code, too lazy to think
+
+    intervals = (
+        ('d', 86400),  # 60 * 60 * 24
+        ('h', 3600),  # 60 * 60
+        ('m', 60),
+        ('s', 1),
+    )
+
+    result = []
+    for name, count in intervals:
+        value = seconds // count
+        if value:
+            result.append(f"{int(value)}{name}")
+        seconds %= count
+
+    # If seconds is less than 1 and not yet added, add it with float formatting
+    if seconds:
+        result.append(f"{seconds:.2f}s")
+
+    return ' '.join(result) if result else '0s'

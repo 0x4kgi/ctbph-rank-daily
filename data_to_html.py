@@ -240,11 +240,11 @@ def make_player_activity_leaderboards_page(
         return html.elem('td', content)
 
     def row(
-            gain: int | float,
-            avatar: str,
-            user_name: str,
-            old: int | float,
-            new: int | float,
+            gain,
+            avatar,
+            user_name,
+            old,
+            new,
     ) -> str:
         return html.elem('tr',
                          row_td(str(gain)),
@@ -274,12 +274,16 @@ def make_player_activity_leaderboards_page(
         rows: list[str] = []
 
         for user_id in above_zero:
+            stat_gain = number_format_on_stat(stat, above_zero[user_id].get(stat, -1))
+            old_value = number_format_on_stat(stat, player_data.comparison_mapped_data[user_id].get(stat, -1))
+            new_value = number_format_on_stat(stat, player_data.latest_mapped_data[user_id].get(stat, -1))
+
             row_string = row(
-                gain=above_zero[user_id].get(stat, -1),
+                gain=stat_gain,
                 avatar=avatar(user_id),
                 user_name=above_zero[user_id].get('ign', 'unknown user'),
-                old=player_data.comparison_mapped_data[user_id].get(stat, -1),
-                new=player_data.latest_mapped_data[user_id].get(stat, -1)
+                old=old_value,
+                new=new_value,
             )
 
             rows.append(row_string)
@@ -300,6 +304,20 @@ def make_player_activity_leaderboards_page(
         total_hits_rows=html_rows['total_hits'],
     )
     logger.debug(output_file)
+
+
+def number_format_on_stat(stat: str, number: int | float) -> str:
+    # i forgor which
+    if stat in ['acc', 'accuracy']:
+        return f'{number:,.2f}'
+
+    if stat in ['ranked_score', 'total_hits']:
+        return util.simplify_number(number)
+
+    if stat in ['play_time']:
+        return util.format_duration(number)
+
+    return f'{number:,}'
 
 
 def stuff_to_html_templates(
