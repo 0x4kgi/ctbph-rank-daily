@@ -134,7 +134,7 @@ def create_page_from_template(
 
     full_output_path = os.path.join(current_dir, '../', output_path)
     os.makedirs(os.path.dirname(full_output_path), exist_ok=True)
-    with open(output_path, 'w') as file:
+    with open(output_path, 'w', encoding='utf-8') as file:
         file.write(html_template)
 
     logger.info('Created html file at: ' + output_path)
