@@ -26,7 +26,6 @@ from scripts.json_player_data import (
 from scripts.logging_config import setup_logging, logger
 
 
-
 def get_recent_plays_of_user(api: Ossapi, user_id, score_type: str = 'best', limit=5) -> list[Score]:
     logger.debug(f'recent plays: {user_id}, {score_type}, {limit}')
 
@@ -267,7 +266,7 @@ def send_activity_ranking_webhook(
 
     main_embed = embed_maker(
         title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
-        url='https://0x4kgi.github.io/ctbph-rank-daily/',
+        url='https://0x4kgi.github.io/ctbph-rank-daily/activity-ranking.html',
         description=description_maker(
             active_players,
             pp_gainers,
@@ -297,9 +296,6 @@ def send_activity_ranking_webhook(
             title='New players in the top 1k',
             description=full_desc,
             color=12517310,
-            footer={
-                'text': 'This is a rare occurrence, try pulling in your fave gacha, this is a sign!'
-            }
         ))
 
     send_webhook(
