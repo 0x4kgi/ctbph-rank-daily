@@ -236,6 +236,9 @@ def make_player_activity_leaderboards_page(
             'loading': 'lazy'
         })
 
+    def row_td(content) -> str:
+        return html.elem('td', content)
+
     def row(
             gain: int | float,
             avatar: str,
@@ -243,32 +246,60 @@ def make_player_activity_leaderboards_page(
             old: int | float,
             new: int | float,
     ) -> str:
-        return html.elem('td',
-                         str(gain),
-                         avatar,
-                         user_name,
-                         str(old),
-                         '→',
-                         str(new)
+        return html.elem('tr',
+                         row_td(str(gain)),
+                         row_td(avatar),
+                         row_td(user_name),
+                         row_td(str(old)),
+                         row_td('→'),
+                         row_td(str(new)),
                          )
 
-    html_rows: dict[str, list[str]] = {}
+    html_rows: dict[str, str] = {}
 
     for stat in stats_list:
         logger.debug('getting the: ' + stat)
         above_zero = {
-            i: sorted_stats[stat]
+            # sorted_stats[stat] returns all players, adding [i] will pinpoint the player
+            i: sorted_stats[stat][i]
             # looks goofy but it makes sense
-            for i, data in list(sorted_stats[stat].items())[:50]
+            for i, data in list(sorted_stats[stat].items())[:50]  # capping to 50
             if data[stat] > 0
         }
         if len(above_zero) >= 50:
             logger.warning(f'{stat} hit max limit of 50')
 
-        # TODO: for every item in above_zero, create a row by using the function "row"
-        #       then add them to a list then join that list as a single string before applying
-        #       to the html template
+        logger.debug(json.dumps(above_zero, indent=4))
+
         rows: list[str] = []
+
+        for user_id in above_zero:
+            row_string = row(
+                gain=above_zero[user_id].get(stat, -1),
+                avatar=avatar(user_id),
+                user_name=above_zero[user_id].get('ign', 'unknown user'),
+                old=player_data.comparison_mapped_data[user_id].get(stat, -1),
+                new=player_data.latest_mapped_data[user_id].get(stat, -1)
+            )
+
+            rows.append(row_string)
+
+        html_rows[stat] = '\n'.join(rows)
+
+    output_file = stuff_to_html_templates(
+        template='docs/activity-ranking.template.html',
+        output_path='docs/activity-ranking.html',
+        test=test,
+        ph_rank_rows=html_rows['country_rank'],
+        global_rank_rows=html_rows['global_rank'],
+        pp_rows=html_rows['pp'],
+        acc_rows=html_rows['acc'],
+        play_count_rows=html_rows['play_count'],
+        play_time_rows=html_rows['play_time'],
+        ranked_score_rows=html_rows['ranked_score'],
+        total_hits_rows=html_rows['total_hits'],
+    )
+    logger.debug(output_file)
 
 
 def stuff_to_html_templates(
