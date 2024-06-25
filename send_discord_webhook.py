@@ -14,6 +14,7 @@ from scripts.discord_webhook import (
     embed_maker,
     send_webhook,
 )
+from scripts.general_utils import simplify_number
 from scripts.json_player_data import (
     MappedPlayerDataCollection,
     MappedScoreDataCollection,
@@ -24,15 +25,6 @@ from scripts.json_player_data import (
 )
 from scripts.logging_config import setup_logging, logger
 
-
-def get_pp_pb_place_from_weight(weight: float) -> int:
-    base = 0.95
-    factor = 100
-    ln_base = math.log(base)
-    ln_target = math.log(weight / factor)
-    n_minus_1 = ln_target / ln_base
-    n = n_minus_1 + 1
-    return round(n)
 
 
 def get_recent_plays_of_user(api: Ossapi, user_id, score_type: str = 'best', limit=5) -> list[Score]:
@@ -54,33 +46,6 @@ def get_recent_plays_of_user(api: Ossapi, user_id, score_type: str = 'best', lim
 
 def get_user_info(api: Ossapi, user_id) -> User:
     return api.user(user_id, mode=GameMode.CATCH)
-
-
-def simplify_number(num):
-    """
-    ChatGPT code, I got too lazy.
-    
-    Simplifies a number by adding appropriate suffixes (k, M, B, T) for thousands, millions, billions, and trillions.
-    
-    Parameters:
-    num (int or float): The number to simplify.
-    
-    Returns:
-    str: The simplified number with the appropriate suffix.
-    """
-    suffixes = ['', 'k', 'M', 'B', 'T']
-    magnitude = 0
-
-    # Determine the magnitude
-    while abs(num) >= 1000 and magnitude < len(suffixes) - 1:
-        magnitude += 1
-        num /= 1000.0
-
-    # Format the number with the appropriate suffix
-    if magnitude == 0:
-        return f"{num:.0f}"
-    else:
-        return f"{num:.2f}{suffixes[magnitude]}"
 
 
 def get_emote_for_score_grade(grade: Grade | str) -> str:
