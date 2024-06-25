@@ -269,8 +269,6 @@ def make_player_activity_leaderboards_page(
         if len(above_zero) >= 50:
             logger.warning(f'{stat} hit max limit of 50')
 
-        logger.debug(json.dumps(above_zero, indent=4))
-
         rows: list[str] = []
 
         for user_id in above_zero:
