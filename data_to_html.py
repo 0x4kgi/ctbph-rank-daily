@@ -340,14 +340,36 @@ def generate_html_from_pp_data(
         data: MappedScoreDataCollection,
         test: bool = False,
 ) -> str:
-    def td(content):
+    def td(content) -> str:
         return html.elem('td', str(content))
 
-    def img(user_id):
+    def img(user_id) -> str:
         return html.elem(
             'img',
             src=f'https://a.ppy.sh/{user_id}',
             loading='lazy'
+        )
+
+    def map_icon(beatmap_id: int) -> str:
+        return html.elem(
+            'img',
+            src=f'https://assets.ppy.sh/beatmaps/{beatmap_id}/covers/list.jpg',
+            loading='lazy'
+        )
+
+    def score_link(score_id: str, score: MappedScoreData) -> str:
+        pp = score['score_pp']
+        if score['score_type'] == 'old':
+            # TODO: remove hardcoded mode in link
+            link = f'https://osu.ppy.sh/scores/fruits/{score_id}'
+        else:
+            link = f'https://osu.ppy.sh/scores/{score_id}'
+
+        return html.elem(
+            'a',
+            str(round(pp, 2)),
+            href=link,
+            target='_new',
         )
 
     rows = []
@@ -356,10 +378,11 @@ def generate_html_from_pp_data(
         # im too lazy to type more
         d: MappedScoreData = data[i]
 
-        pp = td(round(d['score_pp'], 2))
+        pp = td(score_link(i, d))
         avatar = td(img(d['user_id']))
         player = td(d['user_name'])
         grade = td(d['score_grade'])
+        song_icon = td(map_icon(d['beatmapset_id']))
         song = td(d['beatmapset_title'])
         diff = td(d['beatmap_version'])
         sr = td(d['beatmap_difficulty'])
@@ -369,7 +392,7 @@ def generate_html_from_pp_data(
         mods = td(d['score_mods'])
 
         rows.append(html.table_row(
-            pp, avatar, player, grade, song, diff, sr, acc, combo, miss, mods
+            pp, avatar, player, grade, song_icon, song, diff, sr, acc, combo, miss, mods
         ))
 
     return stuff_to_html_templates(
