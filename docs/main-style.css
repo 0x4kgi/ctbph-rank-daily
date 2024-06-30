@@ -76,3 +76,8 @@ img {
     height: 30px;
     width: auto;
 }
+
+a {
+    color: lightblue;
+    text-decoration-line: none;
+}
