@@ -1,7 +1,8 @@
 const table = document.getElementById('scores-table');
+const datePicker = document.getElementById('date-picker');
 
-async function getData() { 
-  const url = 'data/2024/07/12/PH-fruits-pp-records.json';
+async function getData(date) {
+  const url = `data/${date}/PH-fruits-pp-records.json`;
 
   try {
     
@@ -49,8 +50,8 @@ function dataToTableRow(data) {
   </tr>`;
 }
 
-async function main() {
-  const records = await getData();
+async function showScores(date) {
+  const records = await getData(date);
 
   if (!records) {
     alert('cannot get data')
@@ -93,6 +94,27 @@ async function main() {
   }
 
   table.innerHTML = tableRowString;
+}
+
+function main() {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const year = yesterday.getFullYear();
+  const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+  const day = String(yesterday.getDate()).padStart(2, '0');
+
+  datePicker.setAttribute('max', `${year}-${month}-${day}`)
+
+  datePicker.addEventListener('change', () => {
+    const dateValue = datePicker.value
+    const [year, month, day] = dateValue.split('-');
+    
+    showScores(`${year}/${month}/${day}`);
+  });
+
+  datePicker.value = `${year}-${month}-${day}`;
+  datePicker.dispatchEvent(new Event('change'));
 }
 
 main();
