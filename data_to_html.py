@@ -336,105 +336,12 @@ def stuff_to_html_templates(
     return output_file
 
 
-def generate_html_from_pp_data(
-        data: MappedScoreDataCollection,
-        test: bool = False,
-) -> str:
-    def td(content) -> str:
-        return html.elem('td', str(content))
-
-    def img(user_id) -> str:
-        return html.elem(
-            'img',
-            src=f'https://a.ppy.sh/{user_id}',
-            loading='lazy'
-        )
-
-    def map_icon(beatmap_id: int) -> str:
-        return html.elem(
-            'img',
-            src=f'https://assets.ppy.sh/beatmaps/{beatmap_id}/covers/list.jpg',
-            loading='lazy'
-        )
-
-    def score_link(score_id: str, score: MappedScoreData) -> str:
-        pp = score['score_pp']
-        if score['score_type'] == 'old':
-            # TODO: remove hardcoded mode in link
-            link = f'https://osu.ppy.sh/scores/fruits/{score_id}'
-        else:
-            link = f'https://osu.ppy.sh/scores/{score_id}'
-
-        return html.elem(
-            'a',
-            str(round(pp, 2)),
-            href=link,
-            target='_new',
-        )
-
-    rows = []
-
-    for i in data:
-        # im too lazy to type more
-        d: MappedScoreData = data[i]
-
-        pp = td(score_link(i, d))
-        avatar = td(img(d['user_id']))
-        player = td(d['user_name'])
-        grade = td(d['score_grade'])
-        song_icon = td(map_icon(d['beatmapset_id']))
-        song = td(d['beatmapset_title'])
-        diff = td(d['beatmap_version'])
-        sr = td(d['beatmap_difficulty'])
-        acc = td(round(d['accuracy'] * 100, 2))
-        combo = td(d['max_combo'])
-        miss = td(d['count_miss'])
-        mods = td(d['score_mods'])
-
-        rows.append(html.table_row(
-            pp, avatar, player, grade, song_icon, song, diff, sr, acc, combo, miss, mods
-        ))
-
-    return stuff_to_html_templates(
-        template='docs/pp-list.template.html',
-        output_path='docs/pp-rankings.html',
-        test=test,
-        title='PP rankings for the day',
-        rows='\n'.join(rows),
-    )
-
-
-def make_pp_records_page(
-        country: str = 'PH',
-        mode: str = 'fruits',
-        test: bool = False,
-) -> None:
-    latest_timestamp = datetime.now()
-
-    raw_scores = get_data_at_date(
-        date=latest_timestamp.strftime('%Y/%m/%d'),
-        country=country,
-        mode=mode,
-        file_type='pp-records',
-        test=test,
-    )
-
-    if raw_scores is None:
-        logger.info('Cannot get pp score list at the moment.')
-        return
-
-    mapped_scores: MappedScoreDataCollection = map_player_data(raw_scores)
-
-    generate_html_from_pp_data(data=mapped_scores, test=test)
-
-
 def run(
         country: str = 'PH',
         mode: str = 'fruits',
         option: str = 'yesterday',
         test: bool = False,
         skip_list: bool = False,
-        skip_pp: bool = False,
         skip_activity: bool = False,
 ) -> None:
     if not skip_list:
@@ -446,15 +353,6 @@ def run(
         )
     else:
         logger.info('Skipping making the player list.')
-
-    if not skip_pp:
-        make_pp_records_page(
-            country=country,
-            mode=mode,
-            test=test
-        )
-    else:
-        logger.info('Skipping making the pp records list.')
 
     if not skip_activity:
         make_player_activity_leaderboards_page(
@@ -477,7 +375,6 @@ if __name__ == '__main__':
     parser.add_argument('--range', type=str, default='yesterday', help='What would be the comparison date to be done.')
     parser.add_argument('--test', action='store_true', help='Just do tests')
     parser.add_argument('--skip-list', action='store_true')
-    parser.add_argument('--skip-pp', action='store_true')
     parser.add_argument('--skip-activity', action='store_true')
 
     args = parser.parse_args()
@@ -493,6 +390,5 @@ if __name__ == '__main__':
         option=args.range,
         test=args.test,
         skip_list=args.skip_list,
-        skip_pp=args.skip_pp,
         skip_activity=args.skip_activity,
     )
