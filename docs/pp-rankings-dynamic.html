@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="main-style.css">
+  <title>{{__title__}}</title>
+
+  <style>
+    td:nth-child(6), td:nth-child(7) {
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Top 100 pp scores for the day</h1>
+
+  <p>
+    <a href="index.html">Top 1k PH players</a> -
+    <b>Top 100 pp scores for the day</b> -
+    <a href="activity-ranking.html">Activity leaderboard</a>
+  </p>
+
+  <hr>
+
+  <table>
+    <thead>
+      <tr>
+        <th>pp</th>
+        <th></th>
+        <th></th>
+        <th>grade</th>
+        <th></th>
+        <th>song</th>
+        <th>diff</th>
+        <th>sr</th>
+        <th>acc</th>
+        <th>combo</th>
+        <th>miss</th>
+        <th>mods</th>
+      </tr>
+    </thead>
+    <tbody id="scores-table">
+    </tbody>
+  </table>
+
+  <script src="js/pp-records.js"></script>
+</body>
+</html>
