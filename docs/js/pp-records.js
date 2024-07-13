@@ -1,5 +1,10 @@
+const dateToday = new Date();
+const dateYesterday = new Date(dateToday);
+dateYesterday.setDate(dateYesterday.getDate() - 1);
+
 const table = document.getElementById('scores-table');
 const datePicker = document.getElementById('date-picker');
+const dateText = document.getElementById('date-text');
 
 async function getData(date) {
   const url = `data/${date}/PH-fruits-pp-records.json`;
@@ -96,20 +101,24 @@ async function showScores(date) {
   table.innerHTML = tableRowString;
 }
 
+function getDateValues(date) { 
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return [year, month, day];
+}
+
 function main() {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const year = yesterday.getFullYear();
-  const month = String(yesterday.getMonth() + 1).padStart(2, '0');
-  const day = String(yesterday.getDate()).padStart(2, '0');
+  const [year, month, day] = getDateValues(dateYesterday);
 
   datePicker.setAttribute('max', `${year}-${month}-${day}`)
 
   datePicker.addEventListener('change', () => {
     const dateValue = datePicker.value
     const [year, month, day] = dateValue.split('-');
-    
+
+    dateText.innerHTML = `${year}-${month}-${day}`;
     showScores(`${year}/${month}/${day}`);
   });
 
