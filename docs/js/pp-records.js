@@ -42,15 +42,15 @@ function dataToTableRow(data) {
   return `<tr>
     <td><a href="${data.link}" target="_new">${data.score_pp.toFixed(2)}</a></td>
     <td><img src="https://a.ppy.sh/${data.user_id}" loading="lazy"></td>
-    <td>${data.user_name}</td>
-    <td>${data.score_grade}</td>
+    <td>${data.user_name ?? '???'}</td>
+    <td>${data.score_grade ?? '???'}</td>
     <td><img src="https://assets.ppy.sh/beatmaps/${data.beatmapset_id}/covers/list.jpg" loading="lazy"></td>
-    <td>${data.beatmapset_title}</td>
-    <td>${data.beatmap_version}</td>
-    <td>${data.beatmap_difficulty.toFixed(2)}</td>
-    <td>${(data.accuracy * 100).toFixed(2)}</td>
-    <td>${data.max_combo}</td>
-    <td>${data.count_miss}</td>
+    <td>${data.beatmapset_title ?? '???'}</td>
+    <td>${data.beatmap_version ?? '???'}</td>
+    <td>${data.beatmap_difficulty != null ? data.beatmap_difficulty.toFixed(2) : '???'}</td>
+    <td>${data.accuracy != null ? (data?.accuracy * 100).toFixed(2) : '???'}</td>
+    <td>${data.max_combo ?? '???'}</td>
+    <td>${data.count_miss ?? '???'}</td>
     <td>${data.score_mods}</td>
   </tr>`;
 }
