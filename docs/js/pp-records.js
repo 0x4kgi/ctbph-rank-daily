@@ -1,32 +1,12 @@
-const dateToday = new Date();
-const dateYesterday = new Date(dateToday);
-dateYesterday.setDate(dateYesterday.getDate() - 1);
+import {
+  dateYesterday,
+  getDateValues,
+  getData,
+} from "./module/common.js";
 
 const table = document.getElementById('scores-table');
 const datePicker = document.getElementById('date-picker');
 const dateText = document.getElementById('date-text');
-
-async function getData(date) {
-  const url = `data/${date}/PH-fruits-pp-records.json`;
-
-  try {
-    
-    const response = await fetch(url);
-
-    if (!response.ok) { 
-      throw new Error(`Response status: ${response.status}`);
-    }
-
-    const json = await response.json();
-
-    return json;
-
-  } catch (error) {
-    console.error(error.message);
-
-    return false;
-  }
-}
 
 function scoreLink(type, id) { 
   if (type === 'new') { 
@@ -56,7 +36,7 @@ function dataToTableRow(data) {
 }
 
 async function showScores(date) {
-  const records = await getData(date);
+  const records = await getData(date, 'PH-fruits-pp-records');
 
   if (!records) {
     alert('cannot get data')
@@ -65,9 +45,6 @@ async function showScores(date) {
 
   const dataMapping = records.map;
   const scores = records.data;
-
-  console.log(dataMapping);
-  console.log(scores);
 
   const mapped = Object.entries(scores).map((scoreObject) => {
     const [id, values] = scoreObject;
@@ -99,14 +76,6 @@ async function showScores(date) {
   }
 
   table.innerHTML = tableRowString;
-}
-
-function getDateValues(date) { 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return [year, month, day];
 }
 
 function main() {
