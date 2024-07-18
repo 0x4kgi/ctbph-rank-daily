@@ -144,7 +144,7 @@ function updateTable(newMappedData, dataDifference) {
     return '';
   }
 
-  function fnum(num, hasDecimals) {
+  function fNum(num, hasDecimals) {
     const options = hasDecimals ? {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -153,10 +153,10 @@ function updateTable(newMappedData, dataDifference) {
     return num.toLocaleString(undefined, options);
   }
 
-  function statDiffspan(diff, hasDecimals = false) {
+  function statDiffSpan(diff, hasDecimals = false) {
     if (!diff) return '';
 
-    const fancyNum = fnum(diff, hasDecimals);
+    const fancyNum = fNum(diff, hasDecimals);
 
     if (!parseFloat(fancyNum)) return '';
 
@@ -191,9 +191,9 @@ function updateTable(newMappedData, dataDifference) {
         const hasDecimals = stat === 'acc';
         const symbol = stat === 'acc' ? '%' : '';
 
-        let curr = stat !== 'new_entry' ? fnum(playerData[stat], hasDecimals) : 0;
+        let curr = stat !== 'new_entry' ? fNum(playerData[stat], hasDecimals) : 0;
 
-        cells[stat] = `<td>${curr}${symbol}${statDiffspan(diff[stat], hasDecimals)}</td>`
+        cells[stat] = `<td>${curr}${symbol}${statDiffSpan(diff[stat], hasDecimals)}</td>`
       });
 
       return `<tr ${trClass(diff.new_entry, diff.country_rank)}>
