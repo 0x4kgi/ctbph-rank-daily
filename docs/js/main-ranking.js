@@ -128,11 +128,46 @@ function updateTable(newMappedData, dataDifference) {
     return dataDifference[id][attr];
   }
 
+  function trClass(isNew, diff) {
+    if (isNew) {
+      return 'class="new-entry"';
+    }
+
+    if (diff > 0) {
+      return 'class="rank-up"'
+    }
+
+    if (diff < 0) {
+      return 'class="rank-down"'
+    }
+
+    return '';
+  }
+
+  function fnum(num, hasDecimals) {
+    const options = hasDecimals ? {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    } : {};
+
+    return num.toLocaleString(undefined, options);
+  }
+
+  function statDiffspan(diff, hasDecimals = false) {
+    if (!diff) return '';
+
+    const fancyNum = fnum(diff, hasDecimals);
+    const prefix = diff > 0 ? '+' : '';
+    const supClass = diff > 0 ? 'increase' : 'decrease';
+
+    return `<sup class="${supClass}">${prefix}${fancyNum}</sup>`;
+  }
+
   const stats = [
     'new_entry',
     'country_rank',
     'pp',
-    'accuracy',
+    'acc',
     'play_count',
     'rank_x',
     'rank_s',
@@ -145,21 +180,28 @@ function updateTable(newMappedData, dataDifference) {
       const id = playerData.user_id;
 
       const diff = {};
+      const cells = {};
       
       stats.forEach(stat => {
         diff[stat] = getDiff(id, stat);
+
+        const hasDecimals = stat === 'acc';
+
+        let curr = stat !== 'new_entry' ? fnum(playerData[stat], hasDecimals) : 0;
+
+        cells[stat] = `<td>${curr}${statDiffspan(diff[stat], hasDecimals)}</td>`
       });
 
-      return `<tr>
-        <td>${playerData.country_rank} (${diff.country_rank}) (${diff.new_entry})</td>
+      return `<tr ${trClass(diff.new_entry, diff.country_rank)}>
+        ${cells.country_rank}
         <td><img src="https://a.ppy.sh/${playerData.user_id}" loading="lazy"></td>
         <td>${playerData.ign}</td>
-        <td>${playerData.pp} (${diff.pp})</td>
-        <td>${playerData.acc}</td>
-        <td>${playerData.play_count} (${diff.play_count})</td>
-        <td>${playerData.rank_x}</td>
-        <td>${playerData.rank_s}</td>
-        <td>${playerData.rank_a}</td>
+        ${cells.pp}
+        ${cells.acc}
+        ${cells.play_count}
+        ${cells.rank_x}
+        ${cells.rank_s}
+        ${cells.rank_a}
       </tr>`;
     });
 
