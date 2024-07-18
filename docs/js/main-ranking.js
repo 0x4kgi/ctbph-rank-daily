@@ -157,6 +157,9 @@ function updateTable(newMappedData, dataDifference) {
     if (!diff) return '';
 
     const fancyNum = fnum(diff, hasDecimals);
+
+    if (!parseFloat(fancyNum)) return '';
+
     const prefix = diff > 0 ? '+' : '';
     const supClass = diff > 0 ? 'increase' : 'decrease';
 
@@ -186,15 +189,20 @@ function updateTable(newMappedData, dataDifference) {
         diff[stat] = getDiff(id, stat);
 
         const hasDecimals = stat === 'acc';
+        const symbol = stat === 'acc' ? '%' : '';
 
         let curr = stat !== 'new_entry' ? fnum(playerData[stat], hasDecimals) : 0;
 
-        cells[stat] = `<td>${curr}${statDiffspan(diff[stat], hasDecimals)}</td>`
+        cells[stat] = `<td>${curr}${symbol}${statDiffspan(diff[stat], hasDecimals)}</td>`
       });
 
       return `<tr ${trClass(diff.new_entry, diff.country_rank)}>
         ${cells.country_rank}
-        <td><img src="https://a.ppy.sh/${playerData.user_id}" loading="lazy"></td>
+        <td>
+          <a href="https://osu.ppy.sh/users/${playerData.user_id}/fruits" target="_new">
+            <img src="https://a.ppy.sh/${playerData.user_id}" loading="lazy">
+          </a>
+        </td>
         <td>${playerData.ign}</td>
         ${cells.pp}
         ${cells.acc}
