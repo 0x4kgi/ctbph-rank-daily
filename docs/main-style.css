@@ -27,14 +27,14 @@ tr {
 
 td:nth-child(2) {
     text-align: right;
-} 
+}
 
 td:nth-child(3) {
     text-align: left;
-} 
+}
 
 sup.increase {
-    color: green;
+    color: lightgreen;
 }
 
 sup.decrease {
