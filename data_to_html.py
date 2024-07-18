@@ -124,7 +124,7 @@ def generate_html_from_player_data(
     }
 
     return stuff_to_html_templates(
-        template='docs/main-page.template.html',
+        template='docs/templates/main-page.template.html',
         output_path=output_file,
         test=test,
         **replacements,
@@ -289,7 +289,7 @@ def make_player_activity_leaderboards_page(
         html_rows[stat] = '\n'.join(rows)
 
     output_file = stuff_to_html_templates(
-        template='docs/activity-ranking.template.html',
+        template='docs/templates/activity-ranking.template.html',
         output_path='docs/activity-ranking.html',
         test=test,
         ph_rank_rows=html_rows['country_rank'],
