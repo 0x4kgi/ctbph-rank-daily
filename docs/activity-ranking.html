@@ -1,10 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Top 1k osu!catch activity rankings</title>
-  <link rel="stylesheet" href="main-style.css">
+  <link href="main-style.css" rel="stylesheet" />
+
+  <style>
+    abbr {
+      text-decoration: none;
+    }
+
+    div.table-holder {
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <h1>Activity rankings for the day!</h1>
@@ -15,7 +25,21 @@
     <b>Activity leaderboard</b>
   </p>
 
-  <hr>
+  <hr />
+
+  <p>
+    old:
+    <input id="date-picker-old" min="2024-05-18" type="date" /> new:
+    <input id="date-picker-new" type="date" />
+  </p>
+  <p>
+    old data captured at
+    <span id="update-time-span-old">...</span>
+  </p>
+  <p>
+    new data captured at
+    <span id="update-time-span-new">...</span>
+  </p>
 
   <p>
     <a href="#accuracy">Accuracy gainers</a> -
@@ -29,276 +53,237 @@
   </p>
 
   <h2 id="pp">pp gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>79</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>1,940</td><td>→</td><td>2,019</td></tr>
-<tr><td>25</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>972</td><td>→</td><td>997</td></tr>
-<tr><td>14</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>810</td><td>→</td><td>824</td></tr>
-<tr><td>11</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>1,431</td><td>→</td><td>1,442</td></tr>
-<tr><td>5</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>1,124</td><td>→</td><td>1,129</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/4577865" loading="lazy"/></td><td>Chloebe</td><td>6,338</td><td>→</td><td>6,341</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>895</td><td>→</td><td>898</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/18560307" loading="lazy"/></td><td>Silicosis 2</td><td>2,742</td><td>→</td><td>2,743</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>981</td><td>→</td><td>982</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view pp gain table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="pp-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="ph-rank">PH rank gain</h2>
-  <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>25</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>358</td><td>→</td><td>333</td></tr>
-<tr><td>19</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>973</td><td>→</td><td>954</td></tr>
-<tr><td>18</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>811</td><td>→</td><td>793</td></tr>
-<tr><td>6</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>533</td><td>→</td><td>527</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>874</td><td>→</td><td>871</td></tr>
-<tr><td>2</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>687</td><td>→</td><td>685</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view PH rank table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="ph-rank-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="play-count">Play count gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>197</td><td><img src="https://a.ppy.sh/4577865" loading="lazy"/></td><td>Chloebe</td><td>106,450</td><td>→</td><td>106,647</td></tr>
-<tr><td>112</td><td><img src="https://a.ppy.sh/13654885" loading="lazy"/></td><td>-Steven08-</td><td>35,208</td><td>→</td><td>35,320</td></tr>
-<tr><td>100</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>3,055</td><td>→</td><td>3,155</td></tr>
-<tr><td>95</td><td><img src="https://a.ppy.sh/12256216" loading="lazy"/></td><td>Mawile</td><td>91,415</td><td>→</td><td>91,510</td></tr>
-<tr><td>74</td><td><img src="https://a.ppy.sh/6221114" loading="lazy"/></td><td>- Kielzu -</td><td>142,962</td><td>→</td><td>143,036</td></tr>
-<tr><td>72</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>2,253</td><td>→</td><td>2,325</td></tr>
-<tr><td>58</td><td><img src="https://a.ppy.sh/19988904" loading="lazy"/></td><td>kablakuk</td><td>19,131</td><td>→</td><td>19,189</td></tr>
-<tr><td>44</td><td><img src="https://a.ppy.sh/7585544" loading="lazy"/></td><td>Kyonkichi</td><td>61,042</td><td>→</td><td>61,086</td></tr>
-<tr><td>44</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>992</td><td>→</td><td>1,036</td></tr>
-<tr><td>38</td><td><img src="https://a.ppy.sh/16355636" loading="lazy"/></td><td>-Rustyy</td><td>74,314</td><td>→</td><td>74,352</td></tr>
-<tr><td>27</td><td><img src="https://a.ppy.sh/9025855" loading="lazy"/></td><td>Eoneru</td><td>35,891</td><td>→</td><td>35,918</td></tr>
-<tr><td>19</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>575</td><td>→</td><td>594</td></tr>
-<tr><td>17</td><td><img src="https://a.ppy.sh/10597843" loading="lazy"/></td><td>Fuyuka-</td><td>44,214</td><td>→</td><td>44,231</td></tr>
-<tr><td>17</td><td><img src="https://a.ppy.sh/21040184" loading="lazy"/></td><td>WolfPlayerHELLO</td><td>4,762</td><td>→</td><td>4,779</td></tr>
-<tr><td>17</td><td><img src="https://a.ppy.sh/19466375" loading="lazy"/></td><td>Touma_</td><td>10,539</td><td>→</td><td>10,556</td></tr>
-<tr><td>17</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>1,473</td><td>→</td><td>1,490</td></tr>
-<tr><td>17</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>528</td><td>→</td><td>545</td></tr>
-<tr><td>15</td><td><img src="https://a.ppy.sh/18560307" loading="lazy"/></td><td>Silicosis 2</td><td>3,543</td><td>→</td><td>3,558</td></tr>
-<tr><td>7</td><td><img src="https://a.ppy.sh/15165702" loading="lazy"/></td><td>raidellcagape</td><td>17,792</td><td>→</td><td>17,799</td></tr>
-<tr><td>7</td><td><img src="https://a.ppy.sh/32123656" loading="lazy"/></td><td>Czfl10x2</td><td>1,062</td><td>→</td><td>1,069</td></tr>
-<tr><td>6</td><td><img src="https://a.ppy.sh/17198629" loading="lazy"/></td><td>koishi 1</td><td>5,798</td><td>→</td><td>5,804</td></tr>
-<tr><td>5</td><td><img src="https://a.ppy.sh/25863417" loading="lazy"/></td><td>DragonNyte</td><td>9,857</td><td>→</td><td>9,862</td></tr>
-<tr><td>4</td><td><img src="https://a.ppy.sh/17166294" loading="lazy"/></td><td>Alloice</td><td>12,755</td><td>→</td><td>12,759</td></tr>
-<tr><td>4</td><td><img src="https://a.ppy.sh/33762918" loading="lazy"/></td><td>Kekenyy</td><td>3,969</td><td>→</td><td>3,973</td></tr>
-<tr><td>4</td><td><img src="https://a.ppy.sh/21131157" loading="lazy"/></td><td>Swae6</td><td>1,595</td><td>→</td><td>1,599</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/17867474" loading="lazy"/></td><td>Maerceci5</td><td>9,002</td><td>→</td><td>9,005</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/13503012" loading="lazy"/></td><td>Yunoishi</td><td>1,886</td><td>→</td><td>1,889</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/21219450" loading="lazy"/></td><td>MrCheezeBread</td><td>1,664</td><td>→</td><td>1,667</td></tr>
-<tr><td>2</td><td><img src="https://a.ppy.sh/15768124" loading="lazy"/></td><td>ghostsins</td><td>2,161</td><td>→</td><td>2,163</td></tr>
-<tr><td>2</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>274</td><td>→</td><td>276</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/17745759" loading="lazy"/></td><td>-Isla-</td><td>28,310</td><td>→</td><td>28,311</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/15880602" loading="lazy"/></td><td>Piecis</td><td>4,515</td><td>→</td><td>4,516</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/18733138" loading="lazy"/></td><td>cyalk</td><td>6,561</td><td>→</td><td>6,562</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/36138750" loading="lazy"/></td><td>sturecat_123</td><td>265</td><td>→</td><td>266</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view play count table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="play-count-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="ranked-score">Rank score gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>992.94M</td><td><img src="https://a.ppy.sh/4577865" loading="lazy"/></td><td>Chloebe</td><td>231.47B</td><td>→</td><td>232.46B</td></tr>
-<tr><td>82.46M</td><td><img src="https://a.ppy.sh/12256216" loading="lazy"/></td><td>Mawile</td><td>54.44B</td><td>→</td><td>54.52B</td></tr>
-<tr><td>40.91M</td><td><img src="https://a.ppy.sh/9025855" loading="lazy"/></td><td>Eoneru</td><td>49.30B</td><td>→</td><td>49.34B</td></tr>
-<tr><td>28.44M</td><td><img src="https://a.ppy.sh/10597843" loading="lazy"/></td><td>Fuyuka-</td><td>18.38B</td><td>→</td><td>18.41B</td></tr>
-<tr><td>20.75M</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>827.06M</td><td>→</td><td>847.81M</td></tr>
-<tr><td>13.54M</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>220.21M</td><td>→</td><td>233.75M</td></tr>
-<tr><td>9.48M</td><td><img src="https://a.ppy.sh/18560307" loading="lazy"/></td><td>Silicosis 2</td><td>1.75B</td><td>→</td><td>1.75B</td></tr>
-<tr><td>6.86M</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>419.24M</td><td>→</td><td>426.10M</td></tr>
-<tr><td>5.60M</td><td><img src="https://a.ppy.sh/21040184" loading="lazy"/></td><td>WolfPlayerHELLO</td><td>2.64B</td><td>→</td><td>2.64B</td></tr>
-<tr><td>4.51M</td><td><img src="https://a.ppy.sh/7585544" loading="lazy"/></td><td>Kyonkichi</td><td>12.45B</td><td>→</td><td>12.46B</td></tr>
-<tr><td>3.32M</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>412.34M</td><td>→</td><td>415.66M</td></tr>
-<tr><td>3.06M</td><td><img src="https://a.ppy.sh/15165702" loading="lazy"/></td><td>raidellcagape</td><td>8.18B</td><td>→</td><td>8.19B</td></tr>
-<tr><td>2.47M</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>66.44M</td><td>→</td><td>68.91M</td></tr>
-<tr><td>2.25M</td><td><img src="https://a.ppy.sh/17198629" loading="lazy"/></td><td>koishi 1</td><td>2.80B</td><td>→</td><td>2.80B</td></tr>
-<tr><td>2.16M</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>1.28B</td><td>→</td><td>1.28B</td></tr>
-<tr><td>1.08M</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>290.91M</td><td>→</td><td>291.99M</td></tr>
-<tr><td>319.97k</td><td><img src="https://a.ppy.sh/32123656" loading="lazy"/></td><td>Czfl10x2</td><td>469.39M</td><td>→</td><td>469.71M</td></tr>
-<tr><td>3.31k</td><td><img src="https://a.ppy.sh/19466375" loading="lazy"/></td><td>Touma_</td><td>1.12B</td><td>→</td><td>1.12B</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view ranked score table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="ranked-score-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="global-rank">Global rank gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>913</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>32,194</td><td>→</td><td>31,281</td></tr>
-<tr><td>728</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>12,477</td><td>→</td><td>11,749</td></tr>
-<tr><td>690</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>39,328</td><td>→</td><td>38,638</td></tr>
-<tr><td>187</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>19,601</td><td>→</td><td>19,414</td></tr>
-<tr><td>132</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>27,051</td><td>→</td><td>26,919</td></tr>
-<tr><td>93</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>35,354</td><td>→</td><td>35,261</td></tr>
-<tr><td>21</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>31,872</td><td>→</td><td>31,851</td></tr>
-<tr><td>8</td><td><img src="https://a.ppy.sh/32123656" loading="lazy"/></td><td>Czfl10x2</td><td>29,645</td><td>→</td><td>29,637</td></tr>
-<tr><td>3</td><td><img src="https://a.ppy.sh/18560307" loading="lazy"/></td><td>Silicosis 2</td><td>6,989</td><td>→</td><td>6,986</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/7403421" loading="lazy"/></td><td>17171</td><td>2,260</td><td>→</td><td>2,259</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/14948441" loading="lazy"/></td><td>Pataray XDD</td><td>2,333</td><td>→</td><td>2,332</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/2982228" loading="lazy"/></td><td>Nakamura-san</td><td>2,755</td><td>→</td><td>2,754</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/1537651" loading="lazy"/></td><td>-Psyche-</td><td>2,978</td><td>→</td><td>2,977</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/7663545" loading="lazy"/></td><td>shetonic</td><td>2,980</td><td>→</td><td>2,979</td></tr>
-<tr><td>1</td><td><img src="https://a.ppy.sh/4778888" loading="lazy"/></td><td>Honoka-kun</td><td>3,016</td><td>→</td><td>3,015</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view global rank table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="global-rank-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="accuracy">Accuracy gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>0.11</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>99.01</td><td>→</td><td>99.12</td></tr>
-<tr><td>0.04</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>97.99</td><td>→</td><td>98.03</td></tr>
-<tr><td>0.01</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>99.66</td><td>→</td><td>99.67</td></tr>
-<tr><td>0.01</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>99.60</td><td>→</td><td>99.61</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>99.55</td><td>→</td><td>99.55</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/32123656" loading="lazy"/></td><td>Czfl10x2</td><td>99.44</td><td>→</td><td>99.45</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/4577865" loading="lazy"/></td><td>Chloebe</td><td>99.64</td><td>→</td><td>99.64</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>98.98</td><td>→</td><td>98.98</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>99.43</td><td>→</td><td>99.43</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/19466375" loading="lazy"/></td><td>Touma_</td><td>99.74</td><td>→</td><td>99.74</td></tr>
-<tr><td>0.00</td><td><img src="https://a.ppy.sh/21040184" loading="lazy"/></td><td>WolfPlayerHELLO</td><td>99.49</td><td>→</td><td>99.49</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view accuracy table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="accuracy-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="play-time">Play time gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>4h 51m 45s</td><td><img src="https://a.ppy.sh/4577865" loading="lazy"/></td><td>Chloebe</td><td>85d 8h 14m 31s</td><td>→</td><td>85d 13h 6m 16s</td></tr>
-<tr><td>1h 21m 5s</td><td><img src="https://a.ppy.sh/12256216" loading="lazy"/></td><td>Mawile</td><td>55d 16h 30m 45s</td><td>→</td><td>55d 17h 51m 50s</td></tr>
-<tr><td>1h 11m 51s</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>1d 16h 33m 47s</td><td>→</td><td>1d 17h 45m 38s</td></tr>
-<tr><td>54m 25s</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>1d 10h 28m 44s</td><td>→</td><td>1d 11h 23m 9s</td></tr>
-<tr><td>50m 30s</td><td><img src="https://a.ppy.sh/13654885" loading="lazy"/></td><td>-Steven08-</td><td>11d 8h 51m 42s</td><td>→</td><td>11d 9h 42m 12s</td></tr>
-<tr><td>46m 8s</td><td><img src="https://a.ppy.sh/9025855" loading="lazy"/></td><td>Eoneru</td><td>29d 2h 19m 47s</td><td>→</td><td>29d 3h 5m 55s</td></tr>
-<tr><td>43m 24s</td><td><img src="https://a.ppy.sh/6221114" loading="lazy"/></td><td>- Kielzu -</td><td>60d 43m 50s</td><td>→</td><td>60d 1h 27m 14s</td></tr>
-<tr><td>34m 49s</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>12h 39m 54s</td><td>→</td><td>13h 14m 43s</td></tr>
-<tr><td>29m 12s</td><td><img src="https://a.ppy.sh/19988904" loading="lazy"/></td><td>kablakuk</td><td>6d 18h 45m 25s</td><td>→</td><td>6d 19h 14m 37s</td></tr>
-<tr><td>23m 46s</td><td><img src="https://a.ppy.sh/16355636" loading="lazy"/></td><td>-Rustyy</td><td>41d 15h 45m 47s</td><td>→</td><td>41d 16h 9m 33s</td></tr>
-<tr><td>21m 40s</td><td><img src="https://a.ppy.sh/7585544" loading="lazy"/></td><td>Kyonkichi</td><td>24d 3h 15m 52s</td><td>→</td><td>24d 3h 37m 32s</td></tr>
-<tr><td>19m 40s</td><td><img src="https://a.ppy.sh/18560307" loading="lazy"/></td><td>Silicosis 2</td><td>2d 1h 20m 26s</td><td>→</td><td>2d 1h 40m 6s</td></tr>
-<tr><td>16m 28s</td><td><img src="https://a.ppy.sh/21040184" loading="lazy"/></td><td>WolfPlayerHELLO</td><td>3d 16h 2m 54s</td><td>→</td><td>3d 16h 19m 22s</td></tr>
-<tr><td>15m 37s</td><td><img src="https://a.ppy.sh/10597843" loading="lazy"/></td><td>Fuyuka-</td><td>22d 20h 12m 38s</td><td>→</td><td>22d 20h 28m 15s</td></tr>
-<tr><td>15m 8s</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>6h 32m 50s</td><td>→</td><td>6h 47m 58s</td></tr>
-<tr><td>11m 43s</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>19h 20m 23s</td><td>→</td><td>19h 32m 6s</td></tr>
-<tr><td>11m 6s</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>8h 4m 7s</td><td>→</td><td>8h 15m 13s</td></tr>
-<tr><td>8m 34s</td><td><img src="https://a.ppy.sh/15165702" loading="lazy"/></td><td>raidellcagape</td><td>12d 19h 19m 26s</td><td>→</td><td>12d 19h 28m</td></tr>
-<tr><td>8m 23s</td><td><img src="https://a.ppy.sh/17166294" loading="lazy"/></td><td>Alloice</td><td>8d 6h 34m 37s</td><td>→</td><td>8d 6h 43m</td></tr>
-<tr><td>8m 8s</td><td><img src="https://a.ppy.sh/32123656" loading="lazy"/></td><td>Czfl10x2</td><td>19h 59m 29s</td><td>→</td><td>20h 7m 37s</td></tr>
-<tr><td>7m 2s</td><td><img src="https://a.ppy.sh/19466375" loading="lazy"/></td><td>Touma_</td><td>4d 5h 38m 59s</td><td>→</td><td>4d 5h 46m 1s</td></tr>
-<tr><td>6m 56s</td><td><img src="https://a.ppy.sh/17198629" loading="lazy"/></td><td>koishi 1</td><td>3d 14h 12m 1s</td><td>→</td><td>3d 14h 18m 57s</td></tr>
-<tr><td>4m 31s</td><td><img src="https://a.ppy.sh/25863417" loading="lazy"/></td><td>DragonNyte</td><td>4d 18h 35s</td><td>→</td><td>4d 18h 5m 6s</td></tr>
-<tr><td>3m 33s</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>10h 16m 22s</td><td>→</td><td>10h 19m 55s</td></tr>
-<tr><td>3m 14s</td><td><img src="https://a.ppy.sh/17867474" loading="lazy"/></td><td>Maerceci5</td><td>6d 11h 48m 7s</td><td>→</td><td>6d 11h 51m 21s</td></tr>
-<tr><td>2m 19s</td><td><img src="https://a.ppy.sh/18733138" loading="lazy"/></td><td>cyalk</td><td>3d 3h 36m 37s</td><td>→</td><td>3d 3h 38m 56s</td></tr>
-<tr><td>1m 43s</td><td><img src="https://a.ppy.sh/21131157" loading="lazy"/></td><td>Swae6</td><td>1d 10m 36s</td><td>→</td><td>1d 12m 19s</td></tr>
-<tr><td>1m 41s</td><td><img src="https://a.ppy.sh/21219450" loading="lazy"/></td><td>MrCheezeBread</td><td>21h 53m 55s</td><td>→</td><td>21h 55m 36s</td></tr>
-<tr><td>1m 40s</td><td><img src="https://a.ppy.sh/15768124" loading="lazy"/></td><td>ghostsins</td><td>1d 3h 41m 29s</td><td>→</td><td>1d 3h 43m 9s</td></tr>
-<tr><td>1m 26s</td><td><img src="https://a.ppy.sh/33762918" loading="lazy"/></td><td>Kekenyy</td><td>2d 7h 49m 35s</td><td>→</td><td>2d 7h 51m 1s</td></tr>
-<tr><td>57s</td><td><img src="https://a.ppy.sh/13503012" loading="lazy"/></td><td>Yunoishi</td><td>17h 43m 38s</td><td>→</td><td>17h 44m 35s</td></tr>
-<tr><td>12s</td><td><img src="https://a.ppy.sh/17745759" loading="lazy"/></td><td>-Isla-</td><td>24d 3h 51m 59s</td><td>→</td><td>24d 3h 52m 11s</td></tr>
-<tr><td>12s</td><td><img src="https://a.ppy.sh/36138750" loading="lazy"/></td><td>sturecat_123</td><td>3h 19m 32s</td><td>→</td><td>3h 19m 44s</td></tr>
-<tr><td>11s</td><td><img src="https://a.ppy.sh/15880602" loading="lazy"/></td><td>Piecis</td><td>3d 16h 20m 41s</td><td>→</td><td>3d 16h 20m 52s</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view play time table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="play-time-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
 
   <h2 id="total-hits">Total hits gain</h2>
-    <table>
-    <tr>
-      <th>Gain</th>
-      <th></th>
-      <th></th>
-      <th>Old</th>
-      <th></th>
-      <th>New</th>
-    </tr>
-    <!-- GENERATED CODE -->
-    <tr><td>138.18k</td><td><img src="https://a.ppy.sh/4577865" loading="lazy"/></td><td>Chloebe</td><td>59.27M</td><td>→</td><td>59.41M</td></tr>
-<tr><td>52.38k</td><td><img src="https://a.ppy.sh/12256216" loading="lazy"/></td><td>Mawile</td><td>44.84M</td><td>→</td><td>44.89M</td></tr>
-<tr><td>31.23k</td><td><img src="https://a.ppy.sh/25438851" loading="lazy"/></td><td>thea2012</td><td>1.03M</td><td>→</td><td>1.06M</td></tr>
-<tr><td>28.03k</td><td><img src="https://a.ppy.sh/17200245" loading="lazy"/></td><td>AloneGamer69</td><td>878.57k</td><td>→</td><td>906.60k</td></tr>
-<tr><td>25.50k</td><td><img src="https://a.ppy.sh/13654885" loading="lazy"/></td><td>-Steven08-</td><td>7.71M</td><td>→</td><td>7.74M</td></tr>
-<tr><td>25.17k</td><td><img src="https://a.ppy.sh/9025855" loading="lazy"/></td><td>Eoneru</td><td>19.85M</td><td>→</td><td>19.87M</td></tr>
-<tr><td>22.80k</td><td><img src="https://a.ppy.sh/6221114" loading="lazy"/></td><td>- Kielzu -</td><td>45.11M</td><td>→</td><td>45.13M</td></tr>
-<tr><td>16.58k</td><td><img src="https://a.ppy.sh/19988904" loading="lazy"/></td><td>kablakuk</td><td>4.08M</td><td>→</td><td>4.10M</td></tr>
-<tr><td>16.56k</td><td><img src="https://a.ppy.sh/34797152" loading="lazy"/></td><td>ChrisBread_</td><td>319.34k</td><td>→</td><td>335.90k</td></tr>
-<tr><td>15.40k</td><td><img src="https://a.ppy.sh/16355636" loading="lazy"/></td><td>-Rustyy</td><td>33.70M</td><td>→</td><td>33.71M</td></tr>
-<tr><td>9.20k</td><td><img src="https://a.ppy.sh/7585544" loading="lazy"/></td><td>Kyonkichi</td><td>16.09M</td><td>→</td><td>16.10M</td></tr>
-<tr><td>8.68k</td><td><img src="https://a.ppy.sh/10597843" loading="lazy"/></td><td>Fuyuka-</td><td>18.37M</td><td>→</td><td>18.38M</td></tr>
-<tr><td>7.24k</td><td><img src="https://a.ppy.sh/35958248" loading="lazy"/></td><td>kur0na_</td><td>184.60k</td><td>→</td><td>191.84k</td></tr>
-<tr><td>7.21k</td><td><img src="https://a.ppy.sh/18560307" loading="lazy"/></td><td>Silicosis 2</td><td>1.23M</td><td>→</td><td>1.23M</td></tr>
-<tr><td>6.61k</td><td><img src="https://a.ppy.sh/21040184" loading="lazy"/></td><td>WolfPlayerHELLO</td><td>2.31M</td><td>→</td><td>2.32M</td></tr>
-<tr><td>5.49k</td><td><img src="https://a.ppy.sh/14018950" loading="lazy"/></td><td>fselementalist</td><td>210.41k</td><td>→</td><td>215.90k</td></tr>
-<tr><td>4.30k</td><td><img src="https://a.ppy.sh/17166294" loading="lazy"/></td><td>Alloice</td><td>5.91M</td><td>→</td><td>5.92M</td></tr>
-<tr><td>4.15k</td><td><img src="https://a.ppy.sh/19466375" loading="lazy"/></td><td>Touma_</td><td>3.10M</td><td>→</td><td>3.10M</td></tr>
-<tr><td>4.13k</td><td><img src="https://a.ppy.sh/27088585" loading="lazy"/></td><td>Zyk0Freak</td><td>441.60k</td><td>→</td><td>445.73k</td></tr>
-<tr><td>3.98k</td><td><img src="https://a.ppy.sh/15165702" loading="lazy"/></td><td>raidellcagape</td><td>8.66M</td><td>→</td><td>8.66M</td></tr>
-<tr><td>3.29k</td><td><img src="https://a.ppy.sh/32123656" loading="lazy"/></td><td>Czfl10x2</td><td>499.50k</td><td>→</td><td>502.78k</td></tr>
-<tr><td>3.12k</td><td><img src="https://a.ppy.sh/17198629" loading="lazy"/></td><td>koishi 1</td><td>2.47M</td><td>→</td><td>2.47M</td></tr>
-<tr><td>2.16k</td><td><img src="https://a.ppy.sh/25863417" loading="lazy"/></td><td>DragonNyte</td><td>3.12M</td><td>→</td><td>3.12M</td></tr>
-<tr><td>1.64k</td><td><img src="https://a.ppy.sh/17867474" loading="lazy"/></td><td>Maerceci5</td><td>4.25M</td><td>→</td><td>4.26M</td></tr>
-<tr><td>1.14k</td><td><img src="https://a.ppy.sh/18733138" loading="lazy"/></td><td>cyalk</td><td>1.91M</td><td>→</td><td>1.91M</td></tr>
-<tr><td>821</td><td><img src="https://a.ppy.sh/21131157" loading="lazy"/></td><td>Swae6</td><td>588.15k</td><td>→</td><td>588.97k</td></tr>
-<tr><td>808</td><td><img src="https://a.ppy.sh/34553814" loading="lazy"/></td><td>PickSawPlzz</td><td>164.84k</td><td>→</td><td>165.65k</td></tr>
-<tr><td>670</td><td><img src="https://a.ppy.sh/15768124" loading="lazy"/></td><td>ghostsins</td><td>665.74k</td><td>→</td><td>666.41k</td></tr>
-<tr><td>652</td><td><img src="https://a.ppy.sh/33762918" loading="lazy"/></td><td>Kekenyy</td><td>1.48M</td><td>→</td><td>1.48M</td></tr>
-<tr><td>584</td><td><img src="https://a.ppy.sh/21219450" loading="lazy"/></td><td>MrCheezeBread</td><td>555.41k</td><td>→</td><td>556.00k</td></tr>
-<tr><td>429</td><td><img src="https://a.ppy.sh/13503012" loading="lazy"/></td><td>Yunoishi</td><td>458.04k</td><td>→</td><td>458.47k</td></tr>
-<tr><td>97</td><td><img src="https://a.ppy.sh/17745759" loading="lazy"/></td><td>-Isla-</td><td>16.98M</td><td>→</td><td>16.98M</td></tr>
-<tr><td>47</td><td><img src="https://a.ppy.sh/15880602" loading="lazy"/></td><td>Piecis</td><td>2.34M</td><td>→</td><td>2.34M</td></tr>
-<tr><td>39</td><td><img src="https://a.ppy.sh/36138750" loading="lazy"/></td><td>sturecat_123</td><td>89.22k</td><td>→</td><td>89.26k</td></tr>
-    <!-- GENERATED CODE ENDS HERE-->
-  </table>
+  <div class="table-holder">
+    <details>
+      <summary>Expand to view total hits table</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Gain</th>
+            <th></th>
+            <th></th>
+            <th>Old</th>
+            <th></th>
+            <th>New</th>
+          </tr>
+        </thead>
+        <tbody id="total-hits-table">
+          <tr>
+            <td colspan="6">
+              JavaScript not loading? Go to the
+              <a href="./static/activity-ranking.html">
+                static version
+              </a> of this page.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+  <script src="js/activity-ranking.js" type="module"></script>
 </body>
 </html>

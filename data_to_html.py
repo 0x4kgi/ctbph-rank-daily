@@ -22,7 +22,7 @@ def generate_html_from_player_data(
         data_difference: MappedPlayerDataCollection = None,
         timestamp: float = 0.0,
         test: bool = False,
-        output_file: str = 'docs/index.html',
+        output_file: str = 'docs/static/daily.html',
 ) -> str:
     rows = ''
 
@@ -124,7 +124,7 @@ def generate_html_from_player_data(
     }
 
     return stuff_to_html_templates(
-        template='docs/main-page.template.html',
+        template='docs/templates/main-page.template.html',
         output_path=output_file,
         test=test,
         **replacements,
@@ -163,10 +163,10 @@ def make_players_list_page(
     options = {
         # (timedelta, file_name_output)
         # TODO: make the base dir only a single instance
-        'yesterday': (1, 'docs/index.html'),
-        'week': (7, 'docs/weekly.html'),
-        'month': (30, 'docs/monthly.html'),
-        'year': (365, 'docs/yearly.html'),
+        'yesterday': (1, 'docs/static/daily.html'),
+        'week': (7, 'docs/static/weekly.html'),
+        'month': (30, 'docs/static/monthly.html'),
+        'year': (365, 'docs/static/yearly.html'),
 
         # TODO: compare from start of month, year, etc..
     }
@@ -289,8 +289,8 @@ def make_player_activity_leaderboards_page(
         html_rows[stat] = '\n'.join(rows)
 
     output_file = stuff_to_html_templates(
-        template='docs/activity-ranking.template.html',
-        output_path='docs/activity-ranking.html',
+        template='docs/templates/activity-ranking.template.html',
+        output_path='docs/static/activity-ranking.html',
         test=test,
         ph_rank_rows=html_rows['country_rank'],
         global_rank_rows=html_rows['global_rank'],
