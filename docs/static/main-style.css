@@ -1,0 +1,83 @@
+body {
+    background-color: #222;
+    color: white;
+    font-family: monospace;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 0px 5px;
+    margin: auto;
+}
+
+table tr:hover {
+    background-color: #444;
+}
+
+td,
+th {
+    text-align: center;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+tr {
+    border-bottom: 1px #444 solid
+}
+
+td:nth-child(2) {
+    text-align: right;
+}
+
+td:nth-child(3) {
+    text-align: left;
+}
+
+sup.increase {
+    color: lightgreen;
+}
+
+sup.decrease {
+    color: red;
+}
+
+tr.new-entry>td {
+    color: gold;
+}
+
+tr.new-entry>td:first-child::before {
+    content: "✨";
+}
+
+tr.rank-up>td:nth-child(3) {
+    color: lightgreen;
+}
+
+tr.rank-down>td:nth-child(3) {
+    color: pink;
+}
+
+p {
+    text-align: center;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background-color: #222;
+    padding: 10px;
+}
+
+img {
+    height: 30px;
+    width: auto;
+}
+
+a {
+    color: lightblue;
+    text-decoration-line: none;
+}
