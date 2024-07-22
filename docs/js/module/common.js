@@ -45,10 +45,15 @@ function minusDate(minuend, subtrahend) {
   return difference;
 }
 
+function getElem(id) {
+  return document.getElementById(id);
+}
+
 export {
   dateToday,
   dateYesterday,
   getData,
   getDateValues,
+  getElem,
   minusDate,
 };
