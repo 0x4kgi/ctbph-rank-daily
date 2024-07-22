@@ -290,7 +290,7 @@ def make_player_activity_leaderboards_page(
 
     output_file = stuff_to_html_templates(
         template='docs/templates/activity-ranking.template.html',
-        output_path='docs/activity-ranking.html',
+        output_path='docs/static/activity-ranking.html',
         test=test,
         ph_rank_rows=html_rows['country_rank'],
         global_rank_rows=html_rows['global_rank'],
