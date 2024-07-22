@@ -8,7 +8,7 @@ import {
 import {
   mapData,
   mapDifference,
-} from "./module/player-rankings.js"
+} from "./module/player-rankings.js";
 
 const datePickerOld = document.getElementById('date-picker-old');
 const datePickerNew = document.getElementById('date-picker-new');
