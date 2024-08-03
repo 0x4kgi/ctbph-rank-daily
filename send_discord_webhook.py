@@ -3,7 +3,7 @@ import logging
 import math
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from ossapi import GameMode, Ossapi, Score, User
@@ -275,9 +275,13 @@ def send_activity_ranking_webhook(
 
     embeds: list[Embed] = []
 
+    date = latest_date.strftime('%Y-%m-%d')
+    date_yesterday = latest_date - timedelta(days=1)
+    dy_frmt = date_yesterday.strftime('%Y-%m-%d')
+
     main_embed = embed_maker(
         title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
-        url='https://0x4kgi.github.io/ctbph-rank-daily/activity-ranking.html',
+        url=f'https://0x4kgi.github.io/ctbph-rank-daily/activity-ranking.html#start:{dy_frmt};end:{date}',
         description=description_maker(
             active_players,
             pp_gainers,
@@ -360,7 +364,7 @@ def create_pp_record_list_embed(scores: list[Score]) -> Embed:
 
     return embed_maker(
         title=f'Top 5 pp records for {date}',
-        url='https://0x4kgi.github.io/ctbph-rank-daily/pp-rankings.html',
+        url=f'https://0x4kgi.github.io/ctbph-rank-daily/pp-rankings.html#date:{date}',
         description=description,
         color=12891853,
         footer={
