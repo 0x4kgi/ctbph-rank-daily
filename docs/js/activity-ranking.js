@@ -3,6 +3,7 @@ import {
   getData,
   getDateValues,
   getElem,
+  getWindowHashValues,
   minusDate
 } from "./module/common.js";
 
@@ -180,8 +181,6 @@ async function updateRanking() {
 
   const dataDifference = mapDifference(oldMappedData, newMappedData);
 
-  console.log(dataDifference);
-
   for (let table in tables) {
     resetTableForLoading(tables[table], 'Parsing values for this stat...');
     updateTable(tables[table], mainStat[table], oldMappedData, newMappedData, dataDifference);
@@ -197,13 +196,25 @@ function main() {
 
   // since there is no data for the current date
   const [oYear, oMonth, oDay] = getDateValues(dateYesterday);
-  datePickerNew.value = `${oYear}-${oMonth}-${oDay}`;
   datePickerNew.setAttribute('max', datePickerNew.value);
 
   // get the date two days ago...
   const dateMinus2 = minusDate(dateYesterday, 1);
   const [d2Year, d2Month, d2Day] = getDateValues(dateMinus2);
-  datePickerOld.value = `${d2Year}-${d2Month}-${d2Day}`;
+
+  // get the window hash...
+  const windowHash = window.location.hash.substring(1); // removes extra #
+
+  if (windowHash) {
+    let hashValues = getWindowHashValues(windowHash);
+
+    datePickerOld.value = hashValues.start ?? `${d2Year}-${d2Month}-${d2Day}`;
+    datePickerNew.value = hashValues.end ?? `${oYear}-${oMonth}-${oDay}`;
+  } else {
+    datePickerOld.value = `${d2Year}-${d2Month}-${d2Day}`;
+    datePickerNew.value = `${oYear}-${oMonth}-${oDay}`;
+  }
+
   datePickerOld.setAttribute('max', datePickerOld.value);
   datePickerNew.setAttribute('min', datePickerOld.value);
 

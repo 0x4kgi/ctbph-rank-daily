@@ -2,6 +2,7 @@ import {
   dateYesterday,
   getDateValues,
   getData,
+  getWindowHashValues,
 } from "./module/common.js";
 
 const table = document.getElementById('scores-table');
@@ -80,6 +81,7 @@ async function showScores(date) {
 
 function main() {
   const [year, month, day] = getDateValues(dateYesterday);
+  const windowHash = window.location.hash.substring(1);
 
   datePicker.setAttribute('max', `${year}-${month}-${day}`)
 
@@ -91,7 +93,13 @@ function main() {
     showScores(`${year}/${month}/${day}`);
   });
 
-  datePicker.value = `${year}-${month}-${day}`;
+  if (windowHash) {
+    let hashValues = getWindowHashValues(windowHash);
+    datePicker.value = hashValues.date ?? `${year}-${month}-${day}`;
+  } else {
+    datePicker.value = `${year}-${month}-${day}`;
+  }
+
   datePicker.dispatchEvent(new Event('change'));
 }
 

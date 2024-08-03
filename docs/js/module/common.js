@@ -49,11 +49,25 @@ function getElem(id) {
   return document.getElementById(id);
 }
 
+function getWindowHashValues(hash) {
+  const hashList = hash.split(';');
+  let hashPairs = {};
+
+  hashList.forEach(item => {
+    let [key, value] = item.split(':');
+
+    hashPairs[key] = value;
+  });
+
+  return hashPairs;
+}
+
 export {
   dateToday,
   dateYesterday,
   getData,
   getDateValues,
   getElem,
+  getWindowHashValues,
   minusDate,
 };
