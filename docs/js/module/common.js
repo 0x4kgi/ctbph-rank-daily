@@ -62,6 +62,12 @@ function getWindowHashValues(hash) {
   return hashPairs;
 }
 
+function updateWindowHash(dataObject) {
+  let hashList = Object.keys(dataObject).map(key => `${key}:${dataObject[key]}`);
+  let newHash = hashList.join(';');
+  window.location.hash = newHash;
+}
+
 export {
   dateToday,
   dateYesterday,
@@ -70,4 +76,5 @@ export {
   getElem,
   getWindowHashValues,
   minusDate,
+  updateWindowHash
 };

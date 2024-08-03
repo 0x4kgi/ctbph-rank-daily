@@ -3,6 +3,7 @@ import {
   getDateValues,
   getData,
   getWindowHashValues,
+  updateWindowHash,
 } from "./module/common.js";
 
 const table = document.getElementById('scores-table');
@@ -91,6 +92,7 @@ function main() {
 
     dateText.innerHTML = `${year}-${month}-${day}`;
     showScores(`${year}/${month}/${day}`);
+    updateWindowHash({ date: datePicker.value });
   });
 
   if (windowHash) {

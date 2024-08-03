@@ -4,7 +4,8 @@ import {
   getDateValues,
   getElem,
   getWindowHashValues,
-  minusDate
+  minusDate,
+  updateWindowHash,
 } from "./module/common.js";
 
 import {
@@ -185,6 +186,11 @@ async function updateRanking() {
     resetTableForLoading(tables[table], 'Parsing values for this stat...');
     updateTable(tables[table], mainStat[table], oldMappedData, newMappedData, dataDifference);
   }
+
+  updateWindowHash({
+    start: datePickerOld.value,
+    end: datePickerNew.value,
+  });
 }
 
 

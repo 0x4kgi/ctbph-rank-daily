@@ -3,7 +3,8 @@ import {
   getData,
   getDateValues,
   getWindowHashValues,
-  minusDate
+  minusDate,
+  updateWindowHash,
 } from "./module/common.js";
 
 import {
@@ -154,6 +155,11 @@ async function updateRanking() {
   const dataDifference = mapDifference(oldMappedData, newMappedData);
 
   updateTable(newMappedData, dataDifference);
+
+  updateWindowHash({
+    start: datePickerOld.value,
+    end: datePickerNew.value,
+  });
 }
 
 function main() {
