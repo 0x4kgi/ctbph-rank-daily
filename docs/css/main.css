@@ -131,3 +131,7 @@ tr.rank-up>td:nth-child(3) {
 tr.rank-down>td:nth-child(3) {
     color: pink;
 }
+
+footer {
+    text-align: center;
+}
