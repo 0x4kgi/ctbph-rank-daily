@@ -1,0 +1,133 @@
+body {
+    background-color: #222;
+    color: white;
+    font-family: monospace;
+}
+
+nav a {
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+nav a.active {
+    color: yellow;
+}
+
+nav a:hover {
+    background-color: #f2f2f2;
+    color: #222;
+}
+
+nav {
+    width: 100%;
+    align-items: center;
+    display: flex;
+
+    background-color: #444;
+}
+
+nav .nav-start {
+    align-items: left;
+    justify-content: flex-start;
+    width: 50%;
+}
+
+nav .nav-start a {
+    float: left;
+}
+
+nav .nav-middle {
+    align-items: center;
+    flex-shrink: 0;
+}
+
+nav .nav-end {
+    align-items: right;
+    justify-content: flex-end;
+    width: 50%;
+}
+
+nav .nav-end a {
+    float: right;
+}
+
+.logo {
+    background: url('./../image/ctbph.svg') no-repeat center center;
+    background-size: contain;
+    width: 35px;
+    height: 35px;
+    margin: 5px;
+}
+
+section {
+    margin: auto;
+    text-align: center;
+}
+
+table {
+    display: table;
+    margin: auto;
+    border-collapse: separate;
+    border-spacing: 0px 5px;
+}
+
+td img {
+    height: 30px;
+    width: auto;
+}
+
+sup.increase {
+    color: lightgreen;
+}
+
+sup.decrease {
+    color: red;
+}
+
+td,
+th {
+    text-align: center;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+tr {
+    border-bottom: 1px #444 solid
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background-color: #222;
+    padding: 10px;
+}
+
+table tr:hover {
+    background-color: #444;
+}
+
+td:nth-child(2) {
+    text-align: right;
+}
+
+td:nth-child(3) {
+    text-align: left;
+}
+
+tr.new-entry>td {
+    color: gold;
+}
+
+tr.new-entry>td:first-child::before {
+    content: "✨";
+}
+
+tr.rank-up>td:nth-child(3) {
+    color: lightgreen;
+}
+
+tr.rank-down>td:nth-child(3) {
+    color: pink;
+}

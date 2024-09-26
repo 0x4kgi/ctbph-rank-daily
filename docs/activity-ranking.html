@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Top 1k osu!catch activity rankings</title>
-  <link href="main-style.css" rel="stylesheet" />
+  <link href="css/main.css" rel="stylesheet" />
 
   <style>
     abbr {
@@ -14,43 +14,45 @@
     div.table-holder {
       text-align: center;
     }
+
+    h2 {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>Activity rankings for the day!</h1>
+  <nav>
+    <div class="nav-start">
+      <a href="index.html">Players</a>
+      <a href="pp-rankings.html">Scores</a>
+      <a href="activity-ranking.html" class="active">Activity</a>
+    </div>
+  
+    <div class="nav-middle">
+      <div class="logo"></div>
+    </div>
+  
+    <div class="nav-end">
+      <a href="#">About</a>
+    </div>
+  </nav>
 
-  <p>
-    <a href="index.html">Top 1k PH players</a> -
-    <a href="pp-rankings.html">Top 100 pp scores for the day</a> -
-    <b>Activity leaderboard</b>
-  </p>
-
-  <hr />
-
-  <p>
-    old:
-    <input id="date-picker-old" min="2024-05-18" type="date" /> new:
-    <input id="date-picker-new" type="date" />
-  </p>
-  <p>
-    old data captured at
-    <span id="update-time-span-old">...</span>
-  </p>
-  <p>
-    new data captured at
-    <span id="update-time-span-new">...</span>
-  </p>
-
-  <p>
-    <a href="#accuracy">Accuracy gainers</a> -
-    <a href="#global-rank">Global gainers</a> -
-    <a href="#ph-rank">PH rank gainers</a> -
-    <a href="#play-count">PH rank gainers</a> -
-    <a href="#play-time">Play time gainers</a> -
-    <a href="#pp">PP gainers</a> -
-    <a href="#ranked-score">Ranked score gainers</a> -
-    <a href="#total-hits">Total hits gainers</a>
-  </p>
+  <section>
+    <h1>Activity rankings for the day!</h1>
+    <p>
+      old:
+      <input id="date-picker-old" min="2024-05-18" type="date" /> new:
+      <input id="date-picker-new" type="date" />
+    </p>
+    <p>
+      old data captured at
+      <span id="update-time-span-old">...</span>
+    </p>
+    <p>
+      new data captured at
+      <span id="update-time-span-new">...</span>
+    </p>
+  </section>
 
   <h2 id="pp">pp gain</h2>
   <div class="table-holder">
