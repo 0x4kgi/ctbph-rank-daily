@@ -8,7 +8,7 @@ import {
 
 const table = document.getElementById('scores-table');
 const datePicker = document.getElementById('date-picker');
-const dateText = document.getElementById('date-text');
+//const dateText = document.getElementById('date-text');
 
 const updateTimeDisplay = document.getElementById('update-time-span');
 
@@ -96,7 +96,7 @@ function main() {
     const dateValue = datePicker.value
     const [year, month, day] = dateValue.split('-');
 
-    dateText.innerHTML = `${year}-${month}-${day}`;
+    //dateText.innerHTML = `${year}-${month}-${day}`;
     showScores(`${year}/${month}/${day}`);
     updateWindowHash({ date: datePicker.value });
   });
