@@ -3,27 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="main-style.css">
+  <link rel="stylesheet" href="css/main.css">
   <title>ctbPH - Top PP scores</title>
 
   <style>
     td:nth-child(6), td:nth-child(7) {
       text-align: left;
     }
+
+    table a {
+      color: lightblue;
+      text-decoration-line: none;
+    }
   </style>
 </head>
 <body>
-  <h1>Top 100 pp scores for <span id="date-text">...</span></h1>
-
-  <p>
-    <a href="index.html">Top 1k PH players</a> -
-    <b>Top 100 pp scores for the day</b> -
-    <a href="activity-ranking.html">Activity leaderboard</a>
-  </p>
-
-  <hr>
+  <nav>
+    <div class="nav-start">
+      <a href="index.html">Players</a>
+      <a href="pp-rankings.html" class="active">Scores</a>
+      <a href="activity-ranking.html">Activity</a>
+    </div>
   
-  <p> &lt;&lt; <input type="date" id="date-picker" min="2024-06-13"> &gt;&gt;</p>
+    <div class="nav-middle">
+      <div class="logo"></div>
+    </div>
+  
+    <div class="nav-end">
+      <a href="#">About</a>
+    </div>
+  </nav>
+
+  <section>
+    <h1>Top 100 pp scores for <span id="date-text">...</span></h1>
+    <p> &lt;&lt; <input type="date" id="date-picker" min="2024-06-13"> &gt;&gt;</p>
+    <sup><i>Might be incomplete</i></sup>
+  </section>
 
   <table>
     <thead>

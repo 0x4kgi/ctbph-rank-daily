@@ -4,22 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Top 1k osu!catch PH</title>
-  <link rel="stylesheet" href="main-style.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="icon" href="image/ctbph.svg" type="image/svg+xml">
 </head>
 <body>
-  <p><h1>PH catch leaderboard changes for the day</h1></p>
+  <nav>
+    <div class="nav-start">
+      <a href="index.html" class="active">Players</a>
+      <a href="pp-rankings.html">Scores</a>
+      <a href="activity-ranking.html">Activity</a>
+    </div>
 
-  <p>
-    <b>Top 1k PH players</b> -
-    <a href="pp-rankings.html">Top 100 pp scores for the day</a> -
-    <a href="activity-ranking.html">Activity leaderboard</a>
-  </p>
+    <div class="nav-middle">
+      <div class="logo"></div>
+    </div>
 
-  <hr>
+    <div class="nav-end">
+      <a href="#">About</a>
+    </div>
+  </nav>
 
-  <p> old: <input type="date" id="date-picker-old" min="2024-05-18"> new: <input type="date" id="date-picker-new"></p>
-  <p>old data captured at <span id="update-time-span-old">...</span></p>
-  <p>new data captured at <span id="update-time-span-new">...</span></p>
+  <section>
+    <h1>Top 1k PH players</h1>
+    <p> old: <input type="date" id="date-picker-old" min="2024-05-18"> new: <input type="date" id="date-picker-new"></p>
+    <p>old data captured at <span id="update-time-span-old">...</span></p>
+    <p>new data captured at <span id="update-time-span-new">...</span></p>
+  </section>
 
   <table>
     <thead>
