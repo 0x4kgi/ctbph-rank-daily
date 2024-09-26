@@ -27,9 +27,7 @@
 
   <section>
     <h1>Top 1k PH players</h1>
-    <p> old: <input type="date" id="date-picker-old" min="2024-05-18"> new: <input type="date" id="date-picker-new"></p>
-    <p>old data captured at <span id="update-time-span-old">...</span></p>
-    <p>new data captured at <span id="update-time-span-new">...</span></p>
+    <p><input type="date" id="date-picker-old" min="2024-05-18"> :: <input type="date" id="date-picker-new"></p>
   </section>
 
   <table>
@@ -54,6 +52,18 @@
       </tr>
     </tbody>
   </table>
+
+  <footer>
+    <hr>
+    <p>
+      old data captured at
+      <span id="update-time-span-old">...</span>
+    </p>
+    <p>
+      new data captured at
+      <span id="update-time-span-new">...</span>
+    </p>
+  </footer>
 
   <script type="module" src="js/main-ranking.js"></script>
 </body>

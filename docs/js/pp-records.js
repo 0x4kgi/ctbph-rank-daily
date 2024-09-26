@@ -10,6 +10,8 @@ const table = document.getElementById('scores-table');
 const datePicker = document.getElementById('date-picker');
 const dateText = document.getElementById('date-text');
 
+const updateTimeDisplay = document.getElementById('update-time-span');
+
 function scoreLink(type, id) { 
   if (type === 'new') { 
     return `https://osu.ppy.sh/scores/${id}`;
@@ -78,6 +80,10 @@ async function showScores(date) {
   }
 
   table.innerHTML = tableRowString;
+
+  const updateTime = new Date(records.update_date * 1000);
+
+  updateTimeDisplay.innerHTML = `${updateTime.toDateString()} ${updateTime.toTimeString()}`;
 }
 
 function main() {

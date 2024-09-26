@@ -21,6 +21,18 @@
     h2 {
       text-align: center;
     }
+
+    details summary {
+      font-size: x-large;
+      margin: auto;
+      cursor:pointer;
+    }
+
+    details {
+      margin: 10px auto;
+      padding: 10px;
+      width: 50%;
+    }
   </style>
 </head>
 <body>
@@ -43,24 +55,14 @@
   <section>
     <h1>Activity rankings for the day!</h1>
     <p>
-      old:
-      <input id="date-picker-old" min="2024-05-18" type="date" /> new:
+      <input id="date-picker-old" min="2024-05-18" type="date" /> ::
       <input id="date-picker-new" type="date" />
-    </p>
-    <p>
-      old data captured at
-      <span id="update-time-span-old">...</span>
-    </p>
-    <p>
-      new data captured at
-      <span id="update-time-span-new">...</span>
     </p>
   </section>
 
-  <h2 id="pp">pp gain</h2>
   <div class="table-holder">
-    <details>
-      <summary>Expand to view pp gain table</summary>
+    <details open>
+      <summary>pp gain</summary>
       <table>
         <thead>
           <tr>
@@ -86,10 +88,9 @@
     </details>
   </div>
 
-  <h2 id="ph-rank">PH rank gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view PH rank table</summary>
+      <summary>PH rank gain</summary>
       <table>
         <thead>
           <tr>
@@ -115,10 +116,9 @@
     </details>
   </div>
 
-  <h2 id="play-count">Play count gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view play count table</summary>
+      <summary>play count gain</summary>
       <table>
         <thead>
           <tr>
@@ -144,10 +144,9 @@
     </details>
   </div>
 
-  <h2 id="ranked-score">Rank score gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view ranked score table</summary>
+      <summary>ranked score gain</summary>
       <table>
         <thead>
           <tr>
@@ -173,10 +172,9 @@
     </details>
   </div>
 
-  <h2 id="global-rank">Global rank gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view global rank table</summary>
+      <summary>global rank gain</summary>
       <table>
         <thead>
           <tr>
@@ -202,10 +200,9 @@
     </details>
   </div>
 
-  <h2 id="accuracy">Accuracy gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view accuracy table</summary>
+      <summary>accuracy gain</summary>
       <table>
         <thead>
           <tr>
@@ -231,10 +228,9 @@
     </details>
   </div>
 
-  <h2 id="play-time">Play time gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view play time table</summary>
+      <summary>play time gain</summary>
       <table>
         <thead>
           <tr>
@@ -260,10 +256,9 @@
     </details>
   </div>
 
-  <h2 id="total-hits">Total hits gain</h2>
   <div class="table-holder">
     <details>
-      <summary>Expand to view total hits table</summary>
+      <summary>total hits gain</summary>
       <table>
         <thead>
           <tr>
@@ -288,6 +283,18 @@
       </table>
     </details>
   </div>
+
+  <footer>
+    <hr>
+    <p>
+      old data captured at
+      <span id="update-time-span-old">...</span>
+    </p>
+    <p>
+      new data captured at
+      <span id="update-time-span-new">...</span>
+    </p>
+  </footer>
 
   <script src="js/activity-ranking.js" type="module"></script>
 </body>
