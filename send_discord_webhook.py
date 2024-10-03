@@ -89,8 +89,8 @@ def create_embed_from_play(api: Ossapi, data: Score) -> Embed:
     score_time = data.created_at.strftime('%Y-%m-%dT%H:%m:%S.%fZ')
 
     embed_data = embed_maker(
-        title=data.beatmapset.title + f' [{data.beatmap.version}] [{data.beatmap.difficulty_rating:,.2f}*]',
-        description=f'**{rank}** • {score.count_300}/{score.count_100}/{score.count_50}/{score.count_miss} • {max_combo}x',
+        title=data.beatmapset.title + f' [{data.beatmap.version}] [{data.beatmap.difficulty_rating:,.2f}★]',
+        description=f'**{rank}** • {miss_format(score.count_miss)} • {max_combo}x',
         fields=[
             {
                 'name': 'PP',
@@ -213,9 +213,9 @@ def description_maker(
     total_ranked_score = simplify_number(total_stat(ranked_score_gainers, 'ranked_score'))
 
     # use !n for newlines
-    description = """There are: **{:,}** players who farmed,
-    **{:,}** players who climbed the PH ranks,
-    and **{:,}** players who played the game.!n!n
+    description = """There are: **{:,}** players who played the game,
+    **{:,}** players who saw pp gains,
+    and **{:,}** players who climbed the PH ranks.!n!n
     In __total__ there were: **{:,}pp**,
     **{:,} ranks**,
     **{:,} play count**,
@@ -321,23 +321,25 @@ def send_activity_ranking_webhook(
     )
 
 
+def miss_format(miss) -> str:
+    if miss:
+        return f'{miss:,}❌'
+    else:
+        return '**FC 👍**'
+
+
 def create_pp_record_list_embed(scores: list[Score]) -> Embed:
     def formatter(index: int, score: Score) -> str:
-        def miss_format(miss) -> str:
-            if miss:
-                return f'{miss:,}❌'
-            else:
-                return '**Full Combo**'
 
         # 1. {pp}pp - Player
-        player_info = '{}. **{:,.2f}**pp • **{}**'.format(
+        player_info = '***{}.*** **{:,.2f}**pp • **{}**'.format(
             index + 1,
             score.pp,
             score._user.username,
         )
 
         # map name and link also mod?
-        map_info = ' - [**{} [{}]** [{:,.2f}*]]({}) +{}'.format(
+        map_info = '` ` [**{} [{}]** [{:,.2f}★]]({}) +{}'.format(
             score.beatmapset.title,
             score.beatmap.version,
             score.beatmap.difficulty_rating,
@@ -346,7 +348,7 @@ def create_pp_record_list_embed(scores: list[Score]) -> Embed:
         )
 
         # score statistics
-        score_statistics = ' - {} / {:,.2f}% / {} / {:,}x\n'.format(
+        score_statistics = '` ` {} / {:,.2f}% / {} / {:,}x\n'.format(
             get_emote_for_score_grade(score.rank),
             score.accuracy * 100,
             miss_format(score.statistics.count_miss),
@@ -355,7 +357,7 @@ def create_pp_record_list_embed(scores: list[Score]) -> Embed:
 
         return '\n'.join([player_info, map_info, score_statistics])
 
-    description: str = 'Visit the link above for the top 100 (bare bones for now)\n\n'
+    description: str = 'Visit the link above for the top 100. Might be incomplete.\n\n'
 
     for index, scr in enumerate(scores):
         description += formatter(index, scr)
