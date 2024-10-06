@@ -220,9 +220,9 @@ def description_maker(
     **{:,} ranks**,
     **{:,} play count**,
     and **{} ranked score** gained this day!""".format(
+        active_count,
         pp_gain_count,
         rank_gain_count,
-        active_count,
         total_pp,
         total_rank,
         total_pc,
