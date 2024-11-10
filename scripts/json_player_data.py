@@ -10,7 +10,7 @@ from scripts.logging_config import logger
 class MappedPlayerData(TypedDict):
     """Object for player data
     ```
-    county_rank: int
+    country_rank: int
     global_rank: int
     ign: str
     pp: float
@@ -25,7 +25,7 @@ class MappedPlayerData(TypedDict):
     total_hits: int
     ```
     """
-    county_rank: int
+    country_rank: Optional[int]
     global_rank: int
     ign: str
     pp: float
@@ -39,7 +39,6 @@ class MappedPlayerData(TypedDict):
     ranked_score: int
     total_hits: int
     new_entry: Optional[bool]
-    country_rank: Optional[int]
 
 
 class MappedScoreData(TypedDict):
