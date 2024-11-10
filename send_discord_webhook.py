@@ -302,11 +302,9 @@ def send_activity_ranking_webhook(
             user_rank = user_info['country_rank']
             desc.append(f'- [**{new_entries[user_id]['ign']}**](https://osu.ppy.sh/users/{user_id}/fruits) (PH**{user_rank}**)')
 
-        desc = desc[:5]
-
-        print(desc)
-
         if len(new_entries) > 5:
+            # limit new entries to just 5, to fit within webhook character limit
+            desc = desc[:5]
             desc.append(f' - *and {len(new_entries) - 5} more!*')
 
         full_desc = ('There are **{}** new peeps in the Top 1k!\nVisit [the site]('
