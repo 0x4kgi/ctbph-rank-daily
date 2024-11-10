@@ -298,7 +298,16 @@ def send_activity_ranking_webhook(
         desc = []
         for user_id in new_entries:
             # /fruits should be temporary
-            desc.append(f'- [**{new_entries[user_id]['ign']}**](https://osu.ppy.sh/users/{user_id}/fruits)')
+            user_info = latest_mapped_data[user_id]
+            user_rank = user_info['country_rank']
+            desc.append(f'- [**{new_entries[user_id]['ign']}**](https://osu.ppy.sh/users/{user_id}/fruits) (PH**{user_rank}**)')
+
+        desc = desc[:5]
+
+        print(desc)
+
+        if len(new_entries) > 5:
+            desc.append(f' - *and {len(new_entries) - 5} more!*')
 
         full_desc = ('There are **{}** new peeps in the Top 1k!\nVisit [the site]('
                      'https://0x4kgi.github.io/ctbph-rank-daily/) to see where they are. Try looking for ✨\n\nThey '
