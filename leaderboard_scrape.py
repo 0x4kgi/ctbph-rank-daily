@@ -246,6 +246,27 @@ def get_pp_plays(
             key=lambda s: s.pp,
             reverse=True
         )[:top]
+        
+        
+    def remove_duplicate_scores(scores: list[Score]) -> list[Score]:
+        best_scores: dict = {}
+        
+        for score in scores:
+            logger.debug(f'{score._user.username}: {score.pp} {score.beatmapset.title} {score.beatmap.version}')
+            key = (
+                score._user.id,
+                score.beatmap.id,
+                score.beatmapset.id,
+            )
+            if key not in best_scores or score.pp > best_scores[key].pp:
+                best_scores[key] = score
+        
+        list_of_scores = []
+        
+        for key in best_scores:
+            list_of_scores.append(best_scores[key])
+        
+        return list_of_scores
 
     processed_data = get_comparison_and_mapped_data(
         base_date=datetime.now(),
@@ -283,7 +304,8 @@ def get_pp_plays(
             limit=active_players[user_id]['play_count'],
         )
         scores += user_scores
-
+    
+    scores = remove_duplicate_scores(scores)
     scores = sort_scores_by_pp(scores, top=100)
     formatted_list = format_score_data_from_list(scores)
 
