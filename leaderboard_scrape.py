@@ -252,13 +252,13 @@ def get_pp_plays(
         best_scores: dict = {}
         
         for score in scores:
-            logger.debug(f'{score._user.username}: {score.pp} {score.beatmapset.title} {score.beatmap.version}')
             key = (
                 score._user.id,
                 score.beatmap.id,
                 score.beatmapset.id,
             )
             if key not in best_scores or score.pp > best_scores[key].pp:
+                logger.debug(f'{score._user.username} has a better score on {score.beatmapset.title} [{score.beatmap.version}] with {score.pp}')
                 best_scores[key] = score
         
         list_of_scores = []
