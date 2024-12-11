@@ -252,6 +252,9 @@ def get_pp_plays(
         best_scores: dict = {}
         
         for score in scores:
+            if score.pp is None:
+                continue
+
             key = (
                 score._user.id,
                 score.beatmap.id,
