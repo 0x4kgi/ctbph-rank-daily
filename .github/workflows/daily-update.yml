@@ -30,9 +30,6 @@ jobs:
     - name: Run the scraper
       run: python leaderboard_scrape.py -m ctb -c PH -p 20 --formatted
 
-    - name: Create leaderboard page from data
-      run: python data_to_html.py
-
     - name: Commit and push changes
       run: |
         git config --global user.name 'github-actions[bot]'
