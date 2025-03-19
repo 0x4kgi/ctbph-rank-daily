@@ -57,8 +57,13 @@
   <section>
     <h1>Activity rankings for the day!</h1>
     <p>
-      <input id="date-picker-old" min="2024-05-18" type="date" /> to
-      <input id="date-picker-new" type="date" />
+      <button class="move-day" data-days="-7">&lt;&lt;</button>
+      <button class="move-day" data-days="-1">&lt;</button>
+      <input type="date" id="date-picker-old" min="2024-05-18">
+      to
+      <input type="date" id="date-picker-new">
+      <button class="move-day" data-days="1">&gt;</button>
+      <button class="move-day" data-days="7">&gt;&gt;</button>
     </p>
     <sup><i>click the blue text to view table</i></sup>
   </section>
