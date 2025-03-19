@@ -29,7 +29,15 @@
 
   <section>
     <h1>Top 1k PH players</h1>
-    <p><input type="date" id="date-picker-old" min="2024-05-18"> to <input type="date" id="date-picker-new"></p>
+    <p>
+      <button class="move-day" data-days="-7">&lt;&lt;</button>
+      <button class="move-day" data-days="-1">&lt;</button>
+      <input type="date" id="date-picker-old" min="2024-05-18">
+      to
+      <input type="date" id="date-picker-new">
+      <button class="move-day" data-days="1">&gt;</button>
+      <button class="move-day" data-days="7">&gt;&gt;</button>
+    </p>
   </section>
 
   <table>

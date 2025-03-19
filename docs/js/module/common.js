@@ -38,11 +38,24 @@ function getDateValues(date) {
   return [year, month, day];
 }
 
+function getDateValuesText(date) { 
+  const [year, month, day] = getDateValues(date);
+
+  return `${year}-${month}-${day}`;
+}
+
 function minusDate(minuend, subtrahend) {
   const difference = new Date(minuend);
   difference.setDate(difference.getDate() - subtrahend);
 
   return difference;
+}
+
+// what the fuck
+// i do not vibe with this
+// TODO: make an actual date manipulation thingy PLEASE
+function addDate(addend, toAdd) {
+  return minusDate(addend, -toAdd);
 }
 
 function getElem(id) {
@@ -73,8 +86,10 @@ export {
   dateYesterday,
   getData,
   getDateValues,
+  getDateValuesText,
   getElem,
   getWindowHashValues,
+  addDate,
   minusDate,
   updateWindowHash
 };
