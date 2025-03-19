@@ -1,14 +1,17 @@
 import {
   dateYesterday,
-  getDateValues,
   getData,
   getWindowHashValues,
   updateWindowHash,
+  getDateValuesText,
+  addDate,
 } from "./module/common.js";
 
 const table = document.getElementById('scores-table');
 const datePicker = document.getElementById('date-picker');
 //const dateText = document.getElementById('date-text');
+
+const dateChangers = document.getElementsByClassName('move-day');
 
 const updateTimeDisplay = document.getElementById('update-time-span');
 
@@ -86,11 +89,22 @@ async function showScores(date) {
   updateTimeDisplay.innerHTML = `${updateTime.toDateString()} ${updateTime.toTimeString()}`;
 }
 
+// TODO: reduce code reuse, direct copy paste from main-ranking.js
+function moveDates(e) {
+  const dateAdditiveValue = e.target.dataset.days;
+
+  const date = new Date(datePicker.value);
+
+  datePicker.value = getDateValuesText(addDate(date, dateAdditiveValue));
+
+  datePicker.dispatchEvent(new Event('change'));
+}
+
 function main() {
-  const [year, month, day] = getDateValues(dateYesterday);
+  const date = getDateValuesText(dateYesterday);
   const windowHash = window.location.hash.substring(1);
 
-  datePicker.setAttribute('max', `${year}-${month}-${day}`)
+  datePicker.setAttribute('max', date)
 
   datePicker.addEventListener('change', () => {
     const dateValue = datePicker.value
@@ -103,10 +117,14 @@ function main() {
 
   if (windowHash) {
     let hashValues = getWindowHashValues(windowHash);
-    datePicker.value = hashValues.date ?? `${year}-${month}-${day}`;
+    datePicker.value = hashValues.date ?? date;
   } else {
-    datePicker.value = `${year}-${month}-${day}`;
+    datePicker.value = date;
   }
+
+  Array.from(dateChangers).forEach((element) => {
+    element.addEventListener('click', moveDates);
+  });
 
   datePicker.dispatchEvent(new Event('change'));
 }
