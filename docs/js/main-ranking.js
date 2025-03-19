@@ -174,8 +174,7 @@ function moveDates(e) {
   datePickerOld.value = getDateValuesText(addDate(oldDate, dateAdditiveValue));
   datePickerNew.value = getDateValuesText(addDate(newDate, dateAdditiveValue));
 
-  const changeEvent = new Event('change');
-  datePickerOld.dispatchEvent(changeEvent);
+  datePickerOld.dispatchEvent(new Event('change'));
 }
 
 function main() {

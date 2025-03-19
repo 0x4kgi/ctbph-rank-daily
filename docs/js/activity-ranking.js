@@ -1,10 +1,11 @@
 import {
   dateYesterday,
   getData,
-  getDateValues,
+  getDateValuesText,
   getElem,
   getWindowHashValues,
   minusDate,
+  addDate,
   updateWindowHash,
 } from "./module/common.js";
 
@@ -15,6 +16,8 @@ import {
 
 const datePickerOld = getElem('date-picker-old');
 const datePickerNew = getElem('date-picker-new');
+
+const dateChangers = document.getElementsByClassName('move-day');
 
 const updateTimeDisplayOld = getElem('update-time-span-old');
 const updateTimeDisplayNew = getElem('update-time-span-new');
@@ -193,6 +196,18 @@ async function updateRanking() {
   });
 }
 
+// TODO: reduce code reuse, direct copy paste from main-ranking.js
+function moveDates(e) {
+  const dateAdditiveValue = e.target.dataset.days;
+
+  const oldDate = new Date(datePickerOld.value);
+  const newDate = new Date(datePickerNew.value);
+
+  datePickerOld.value = getDateValuesText(addDate(oldDate, dateAdditiveValue));
+  datePickerNew.value = getDateValuesText(addDate(newDate, dateAdditiveValue));
+
+  datePickerOld.dispatchEvent(new Event('change'));
+}
 
 // TODO: unify this with main-ranking.js
 function main() {
@@ -201,12 +216,12 @@ function main() {
   }
 
   // since there is no data for the current date
-  const [oYear, oMonth, oDay] = getDateValues(dateYesterday);
+  const oDate = getDateValuesText(dateYesterday);
   datePickerNew.setAttribute('max', datePickerNew.value);
 
   // get the date two days ago...
   const dateMinus2 = minusDate(dateYesterday, 1);
-  const [d2Year, d2Month, d2Day] = getDateValues(dateMinus2);
+  const d2Date = getDateValuesText(dateMinus2);
 
   // get the window hash...
   const windowHash = window.location.hash.substring(1); // removes extra #
@@ -214,11 +229,11 @@ function main() {
   if (windowHash) {
     let hashValues = getWindowHashValues(windowHash);
 
-    datePickerOld.value = hashValues.start ?? `${d2Year}-${d2Month}-${d2Day}`;
-    datePickerNew.value = hashValues.end ?? `${oYear}-${oMonth}-${oDay}`;
+    datePickerOld.value = hashValues.start ?? d2Date;
+    datePickerNew.value = hashValues.end ?? oDate;
   } else {
-    datePickerOld.value = `${d2Year}-${d2Month}-${d2Day}`;
-    datePickerNew.value = `${oYear}-${oMonth}-${oDay}`;
+    datePickerOld.value = d2Date;
+    datePickerNew.value = oDate;
   }
 
   datePickerOld.setAttribute('max', datePickerOld.value);
@@ -226,6 +241,10 @@ function main() {
 
   datePickerNew.addEventListener('change', updateRanking);
   datePickerOld.addEventListener('change', updateRanking);
+
+  Array.from(dateChangers).forEach((element) => {
+    element.addEventListener('click', moveDates);
+  });
 
   datePickerNew.dispatchEvent(new Event('change'));
 }
