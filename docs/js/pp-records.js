@@ -43,10 +43,17 @@ function dataToTableRow(data) {
 }
 
 async function showScores(date) {
+  // TODO: unify table updating, maybe?
+  table.innerHTML = `<tr>
+    <td colspan="12">Fetching scores for ${date}...</td>
+  </tr>`;
+
   const records = await getData(date, 'PH-fruits-pp-records');
 
   if (!records) {
-    alert('cannot get data')
+    table.innerHTML = `<tr>
+      <td colspan="12">Cannot find data for the current date :(</td>
+    </tr>`;
     return;
   }
 
