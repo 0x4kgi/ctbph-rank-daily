@@ -159,7 +159,10 @@ async function updateRanking() {
   const newDate = new Date(datePickerNew.value);
 
   if (oldDate > newDate) {
-    resetTableForLoading(`Date order flipped, check inputs. old: ${datePickerOld.value}, new: ${datePickerNew.value}`);
+    // TODO: maybe unify batch updating of tables to show messages?
+    for (let table in tables) {
+      resetTableForLoading(tables[table], `Date order flipped, check inputs. old: ${datePickerOld.value}, new: ${datePickerNew.value}`);
+    }
     return;
   }
 
@@ -170,7 +173,10 @@ async function updateRanking() {
   const newData = await getData(datePickerNew.value, 'PH-fruits');
 
   if (!oldData || !newData) {
-    resetTableForLoading(`Incomplete data. old: ${datePickerOld.value}, new: ${datePickerNew.value}`);
+    // TODO: maybe unify batch updating of tables to show messages?
+    for (let table in tables) {
+      resetTableForLoading(tables[table], `Incomplete data. old: ${datePickerOld.value}, new: ${datePickerNew.value}`);
+    }
     return;
   }
 
