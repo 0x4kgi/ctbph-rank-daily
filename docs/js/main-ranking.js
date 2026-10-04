@@ -75,6 +75,7 @@ function updateTable(newMappedData, dataDifference) {
   const stats = [
     'new_entry',
     'country_rank',
+    'global_rank',
     'pp',
     'acc',
     'play_count',
@@ -104,6 +105,7 @@ function updateTable(newMappedData, dataDifference) {
 
       return `<tr ${trClass(diff.new_entry, diff.country_rank)}>
         ${cells.country_rank}
+        ${cells.global_rank}
         <td>
           <a href="https://osu.ppy.sh/users/${playerData.user_id}/fruits" target="_new">
             <img src="https://a.ppy.sh/${playerData.user_id}" loading="lazy">
