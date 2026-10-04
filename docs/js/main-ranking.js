@@ -100,18 +100,18 @@ function updateTable(newMappedData, dataDifference) {
 
         let curr = stat !== 'new_entry' ? fNum(playerData[stat], hasDecimals) : 0;
 
-        cells[stat] = `<td>${curr}${symbol}${statDiffSpan(diff[stat], hasDecimals)}</td>`
+        cells[stat] = `<td class="${stat}">${curr}${symbol}${statDiffSpan(diff[stat], hasDecimals)}</td>`;
       });
 
       return `<tr ${trClass(diff.new_entry, diff.country_rank)}>
         ${cells.country_rank}
         ${cells.global_rank}
-        <td>
+        <td class="player_avatar">
           <a href="https://osu.ppy.sh/users/${playerData.user_id}/fruits" target="_new">
             <img src="https://a.ppy.sh/${playerData.user_id}" loading="lazy">
           </a>
         </td>
-        <td>${playerData.ign}</td>
+        <td class="player_name">${playerData.ign}</td>
         ${cells.pp}
         ${cells.acc}
         ${cells.play_count}
