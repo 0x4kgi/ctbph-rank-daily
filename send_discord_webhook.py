@@ -1,7 +1,7 @@
 import argparse
 import logging
-import math
 import os
+import re
 import time
 from datetime import datetime, timedelta
 
@@ -26,29 +26,69 @@ from scripts.json_player_data import (
 )
 from scripts.logging_config import setup_logging, logger
 
+SCORE_FETCH_RETRIES = 3
+SCORE_FETCH_RETRY_DELAY = 3
+SCORE_FETCH_LIMIT_WARNING = 100
+SUMMARY_FIELD_LIMIT = 5
+NEW_ENTRIES_DISPLAY_LIMIT = 5
+PP_RANKING_TOP_COUNT = 5
 
-def get_recent_plays_of_user(api: Ossapi, user_id, score_type: str = 'best', limit=5) -> list[Score]:
+GRADE_EMOTES = {
+    'SSH': '<:rankingXH:1247443556881399848>',
+    'SS': '<:rankingX:1247443458596274278>',
+    'SH': '<:rankingSH:1247443748695179315>',
+    'S': '<:rankingS:1247443674862845982>',
+    'A': '<:rankingA:1247443797890174986>',
+    'B': '<:rankingB:1247443846900744233>',
+    'C': '<:rankingC:1247443918711160874>',
+    'D': '<:rankingD:1247444009010331699>',
+}
+
+ACTIVITY_WEBHOOK_USERNAME = 'Top 1k osu!catch PH tracker'
+ACTIVITY_WEBHOOK_AVATAR = 'https://iili.io/JQmQKKl.png'
+PP_LIST_WEBHOOK_AVATAR = 'https://iili.io/JmEwJhF.png'
+ACTIVITY_FOOTER_TEXT = (
+    'Updates delivered daily at around midnight. '
+    'Inaccurate data? Blame Eoneru.'
+)
+ACTIVITY_EMBED_COLOR = 12517310
+PP_EMBED_COLOR = 12891853
+TOP_PLAY_EMBED_COLOR = 16775424
+SITE_BASE_URL = 'https://0x4kgi.github.io/ctbph-rank-daily'
+
+
+def get_recent_plays_of_user(
+    api: Ossapi,
+    user_id,
+    score_type: str = 'best',
+    limit=5,
+) -> list[Score]:
     logger.debug(f'recent plays: {user_id}, {score_type}, {limit}')
 
-    if limit > 100:
-        logger.warning(f'some plays might not be gathered for this player ({user_id})')
+    if limit > SCORE_FETCH_LIMIT_WARNING:
+        logger.warning(
+            f'some plays might not be gathered for this player ({user_id})'
+        )
 
-    retries = 3
-    while retries > 0:
+    retries_left = SCORE_FETCH_RETRIES
+    while retries_left > 0:
         try:
-            data = api.user_scores(
+            fetched_scores = api.user_scores(
                 user_id,
                 score_type,
                 limit=limit,
                 mode=GameMode.CATCH,
-                include_fails=False
+                include_fails=False,
             )
-            logger.debug(f'# of plays: {len(data)}')
-            return data
-        except:
-            logger.error(f'Error on getting data for {user_id}. Retrying in 3s. {retries} left')
-            retries -= 1
-            time.sleep(3)
+            logger.debug(f'# of plays: {len(fetched_scores)}')
+            return fetched_scores
+        except Exception as fetch_error:
+            logger.error(
+                f'Error on getting data for {user_id}. '
+                f'Retrying in 3s. {retries_left} left ({fetch_error})'
+            )
+            retries_left -= 1
+            time.sleep(SCORE_FETCH_RETRY_DELAY)
 
     logger.error(f'Cannot gather user scores for {user_id}. Returning nothing')
     return []
@@ -59,58 +99,60 @@ def get_user_info(api: Ossapi, user_id) -> User:
 
 
 def get_emote_for_score_grade(grade: Grade | str) -> str:
-    ranks_dict = {
-        'SSH': '<:rankingXH:1247443556881399848>',
-        'SS': '<:rankingX:1247443458596274278>',
-        'SH': '<:rankingSH:1247443748695179315>',
-        'S': '<:rankingS:1247443674862845982>',
-        'A': '<:rankingA:1247443797890174986>',
-        'B': '<:rankingB:1247443846900744233>',
-        'C': '<:rankingC:1247443918711160874>',
-        'D': '<:rankingD:1247444009010331699>',
-    }
-    grade = str(grade).split('.')[-1]
-    return ranks_dict.get(grade, '?')
+    grade_name = str(grade).split('.')[-1]
+    return GRADE_EMOTES.get(grade_name, '?')
 
 
-def create_embed_from_play(api: Ossapi, data: Score) -> Embed:
-    user = get_user_info(api, data.user_id)
+def miss_format(miss) -> str:
+    if miss:
+        return f'{miss:,}❌'
 
-    osu_username = user.username
-    osu_avatar = user.avatar_url
-    osu_url = f'https://osu.ppy.sh/users/{user.id}'
-    user_pp = round(user.statistics.pp, 0)
-    ph_rank = user.statistics.country_rank
+    return '**FC 👍**'
 
-    score = data.statistics
-    max_combo = data.max_combo
-    rank = get_emote_for_score_grade(data.rank)
-    mods = str(data.mods)
-    score_time = data.created_at.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-    embed_data = embed_maker(
-        title=data.beatmapset.title + f' [{data.beatmap.version}] [{data.beatmap.difficulty_rating:,.2f}★]',
-        description=f'**{rank}** • {miss_format(score.count_miss)} • {max_combo}x',
+def create_embed_from_play(api: Ossapi, play_score: Score) -> Embed:
+    play_user = get_user_info(api, play_score.user_id)
+
+    osu_username = play_user.username
+    osu_avatar = play_user.avatar_url
+    osu_url = f'https://osu.ppy.sh/users/{play_user.id}'
+    user_pp = round(play_user.statistics.pp, 0)
+    ph_rank = play_user.statistics.country_rank
+
+    score_statistics = play_score.statistics
+    rank_emote = get_emote_for_score_grade(play_score.rank)
+    mods_text = str(play_score.mods)
+    score_time = play_score.created_at.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+    return embed_maker(
+        title=play_score.beatmapset.title + (
+            f' [{play_score.beatmap.version}] '
+            f'[{play_score.beatmap.difficulty_rating:,.2f}★]'
+        ),
+        description=(
+            f'**{rank_emote}** • {miss_format(score_statistics.count_miss)} '
+            f'• {play_score.max_combo}x'
+        ),
         fields=[
             {
                 'name': 'PP',
-                'value': f'{data.pp:,.2f}pp',
-                'inline': True
+                'value': f'{play_score.pp:,.2f}pp',
+                'inline': True,
             },
             {
                 'name': 'Accuracy',
-                'value': f'{data.accuracy * 100:,.2f}%',
-                'inline': True
+                'value': f'{play_score.accuracy * 100:,.2f}%',
+                'inline': True,
             },
             {
                 'name': 'Mods',
-                'value': mods,
-                'inline': True
+                'value': mods_text,
+                'inline': True,
             },
         ],
-        url=str(data.beatmap.url),
+        url=str(play_score.beatmap.url),
         image={
-            'url': data.beatmapset.covers.cover
+            'url': play_score.beatmapset.covers.cover,
         },
         author={
             'name': f'{osu_username} • {user_pp:,.0f}pp • PH{ph_rank}',
@@ -118,99 +160,129 @@ def create_embed_from_play(api: Ossapi, data: Score) -> Embed:
             'url': osu_url,
         },
         timestamp=score_time,
-        color=16775424,
+        color=TOP_PLAY_EMBED_COLOR,
     )
 
-    return embed_data
+
+def player_profile_link(user_id) -> str:
+    return f'https://osu.ppy.sh/users/{user_id}/fruits'
 
 
-# TODO: clean the parameters to avoid adding another one if more stats are shown
+def format_pp_gain_line(item, latest_data, comparison_data) -> str:
+    user_id = item[0]
+    ign = item[1]['ign']
+    gained = item[1]['pp']
+    old_pp = comparison_data[user_id]['pp']
+    new_pp = latest_data[user_id]['pp']
+    link = player_profile_link(user_id)
+    return f'1. [**{ign}**]({link}) • {old_pp:,}pp → **{new_pp:,}**pp (+**{gained:,}**pp)'
+
+
+def format_rank_gain_line(item, latest_data, comparison_data) -> str:
+    user_id = item[0]
+    ign = item[1]['ign']
+    gained = item[1]['country_rank']
+    old_rank = comparison_data[user_id]['country_rank']
+    new_rank = latest_data[user_id]['country_rank']
+    link = player_profile_link(user_id)
+    return (
+        f'1. [**{ign}**]({link}) • PH{old_rank:,} → '
+        f'PH**{new_rank:,}** (+**{gained:,}** ranks)'
+    )
+
+
+def format_play_count_line(item, latest_data, comparison_data) -> str:
+    user_id = item[0]
+    ign = item[1]['ign']
+    gained = item[1]['play_count']
+    old_count = comparison_data[user_id]['play_count']
+    new_count = latest_data[user_id]['play_count']
+    link = player_profile_link(user_id)
+    return (
+        f'1. [**{ign}**]({link}) • {old_count:,} → '
+        f'{new_count:,} (+**{gained:,}** plays)'
+    )
+
+
+def format_ranked_score_line(item, latest_data, comparison_data) -> str:
+    user_id = item[0]
+    ign = item[1]['ign']
+    gained = item[1]['ranked_score']
+    old_score = comparison_data[user_id]['ranked_score']
+    new_score = latest_data[user_id]['ranked_score']
+    link = player_profile_link(user_id)
+    return (
+        f'1. [**{ign}**]({link}) • {simplify_number(old_score)} → '
+        f'{simplify_number(new_score)} (+**{simplify_number(gained)}**)'
+    )
+
+
+def format_summary_field(name, ranked_data, formatter, stat, limit=5) -> EmbedField:
+    ranked_items = list(ranked_data.items())[:limit]
+    return {
+        'name': name,
+        'value': '\n'.join(
+            formatter(item) for item in ranked_items if item[1][stat] > 0
+        ),
+    }
+
+
 def create_player_summary_fields(
-        pp_gainers,
-        rank_gainers,
-        active_players,
-        ranked_score_gainers,
-        latest_data,
-        comparison_data
+    pp_gainers,
+    rank_gainers,
+    active_players,
+    ranked_score_gainers,
+    latest_data,
+    comparison_data,
 ) -> list[EmbedField]:
-    def format_field(name, data, formatter, stat, limit=5) -> EmbedField:
-        return {
-            'name': name,
-            'value': '\n'.join(
-                formatter(item) for item in list(data.items())[:limit] if item[1][stat] > 0
-            )
-        }
-
-    def _uid_link(item):
-        return item[0], f'https://osu.ppy.sh/users/{item[0]}/fruits'
-
-    def _get_stats(uid, stat):
-        nonlocal latest_data, comparison_data
-        old = comparison_data[uid][stat]
-        new = latest_data[uid][stat]
-        return old, new
-
-    # TODO: maybe reduce code repetition here, on the formatters
-    def pp_formatter(item):
-        uid, link = _uid_link(item)
-        ign = item[1]['ign']
-        gained = item[1]['pp']
-        old, new = _get_stats(uid, 'pp')
-        return f'1. [**{ign}**]({link}) • {old:,}pp → **{new:,}**pp (+**{gained:,}**pp)'
-
-    def rank_formatter(item):
-        uid, link = _uid_link(item)
-        ign = item[1]['ign']
-        gained = item[1]['country_rank']
-        old, new = _get_stats(uid, 'country_rank')
-        return f'1. [**{ign}**]({link}) • PH{old:,} → PH**{new:,}** (+**{gained:,}** ranks)'
-
-    def pc_formatter(item):
-        uid, link = _uid_link(item)
-        ign = item[1]['ign']
-        gained = item[1]['play_count']
-        old, new = _get_stats(uid, 'play_count')
-        return f'1. [**{ign}**]({link}) • {old:,} → {new:,} (+**{gained:,}** plays)'
-
-    def rs_formatter(item):
-        uid, link = _uid_link(item)
-        ign = item[1]['ign']
-        gained = item[1]['ranked_score']
-        old, new = _get_stats(uid, 'ranked_score')
-        return f'1. [**{ign}**]({link}) • {simplify_number(old)} → {simplify_number(new)} (+**{simplify_number(gained)}**)'
-
-    # this is getting ugly, man
-    pp_field = format_field('pp farmers', pp_gainers, pp_formatter, 'pp')
-    rank_field = format_field('PH rank climbers', rank_gainers, rank_formatter, 'country_rank')
-    pc_field = format_field('"play more" gamers', active_players, pc_formatter, 'play_count')
-    rs_field = format_field('ranked score farmers', ranked_score_gainers, rs_formatter, 'ranked_score')
+    pp_field = format_summary_field(
+        'pp farmers', pp_gainers,
+        lambda item: format_pp_gain_line(item, latest_data, comparison_data),
+        'pp',
+    )
+    rank_field = format_summary_field(
+        'PH rank climbers', rank_gainers,
+        lambda item: format_rank_gain_line(item, latest_data, comparison_data),
+        'country_rank',
+    )
+    pc_field = format_summary_field(
+        '"play more" gamers', active_players,
+        lambda item: format_play_count_line(item, latest_data, comparison_data),
+        'play_count',
+    )
+    rs_field = format_summary_field(
+        'ranked score farmers', ranked_score_gainers,
+        lambda item: format_ranked_score_line(item, latest_data, comparison_data),
+        'ranked_score',
+    )
 
     return [pp_field, rank_field, pc_field, rs_field]
 
 
+def count_positive_gains(ranked_data: dict, stat: str) -> int:
+    return len([i for i in ranked_data.items() if i[1][stat] > 0])
+
+
+def sum_positive_gains(ranked_data: dict, stat: str) -> int:
+    return sum([ranked_data[i][stat] for i in ranked_data if ranked_data[i][stat] > 0])
+
+
 def description_maker(
-        active_players: dict,
-        pp_gainers: dict,
-        rank_gainers: dict,
-        ranked_score_gainers: dict,
+    active_players: dict,
+    pp_gainers: dict,
+    rank_gainers: dict,
+    ranked_score_gainers: dict,
 ) -> str:
-    import re
+    active_count = count_positive_gains(active_players, 'play_count')
+    pp_gain_count = count_positive_gains(pp_gainers, 'pp')
+    rank_gain_count = count_positive_gains(rank_gainers, 'country_rank')
 
-    def above_zero_count(data: dict, key: str) -> int:
-        return len([i for i in data.items() if i[1][key] > 0])
-
-    def total_stat(data, key) -> int:
-        return sum([data[i][key] for i in data if data[i][key] > 0])
-
-    # TODO: maybe clean this up too, but this is nothing major anyway
-    active_count = above_zero_count(active_players, 'play_count')
-    pp_gain_count = above_zero_count(pp_gainers, 'pp')
-    rank_gain_count = above_zero_count(rank_gainers, 'country_rank')
-
-    total_pc = total_stat(active_players, 'play_count')
-    total_pp = total_stat(pp_gainers, 'pp')
-    total_rank = total_stat(rank_gainers, 'country_rank')
-    total_ranked_score = simplify_number(total_stat(ranked_score_gainers, 'ranked_score'))
+    total_pc = sum_positive_gains(active_players, 'play_count')
+    total_pp = sum_positive_gains(pp_gainers, 'pp')
+    total_rank = sum_positive_gains(rank_gainers, 'country_rank')
+    total_ranked_score = simplify_number(
+        sum_positive_gains(ranked_score_gainers, 'ranked_score')
+    )
 
     # use !n for newlines
     description = """There are: **{:,}** players who played the game,
@@ -246,149 +318,166 @@ def get_new_entries(data: MappedPlayerDataCollection) -> MappedPlayerDataCollect
     }
 
 
+def build_new_entries_embed(new_entries, latest_mapped_data) -> Embed:
+    desc_lines = []
+    for user_id in new_entries:
+        # /fruits should be temporary
+        user_rank = latest_mapped_data[user_id]['country_rank']
+        ign = new_entries[user_id]["ign"]
+        desc_lines.append(
+            f'- [**{ign}**](https://osu.ppy.sh/users/{user_id}/fruits) '
+            f'(PH**{user_rank}**)'
+        )
+
+    if len(new_entries) > NEW_ENTRIES_DISPLAY_LIMIT:
+        # limit new entries to just 5, to fit within webhook character limit
+        desc_lines = desc_lines[:NEW_ENTRIES_DISPLAY_LIMIT]
+        desc_lines.append(f' - *and {len(new_entries) - 5} more!*')
+
+    full_desc = (
+        'There are **{}** new peeps in the Top 1k!\nVisit [the site]('
+        'https://0x4kgi.github.io/ctbph-rank-daily/) to see where they are. '
+        'Try looking for ✨\n\nThey are:\n{}'
+    ).format(len(new_entries), '\n'.join(desc_lines))
+
+    return embed_maker(
+        title='New players in the top 1k',
+        description=full_desc,
+        color=ACTIVITY_EMBED_COLOR,
+    )
+
+
 def send_activity_ranking_webhook(
-        latest_mapped_data: dict,
-        comparison_mapped_data: dict,
-        data_difference: dict,
-        latest_date: datetime = datetime.now(),
+    latest_mapped_data: dict,
+    comparison_mapped_data: dict,
+    data_difference: dict,
+    latest_date: datetime | None = None,
 ) -> None:
-    # TODO: this is getting ridiculous, find a way to simplify this
+    if latest_date is None:
+        latest_date = datetime.now()
+
     active_players = get_sorted_dict_on_stat(data_difference, 'play_count', True)
     pp_gainers = get_sorted_dict_on_stat(data_difference, 'pp', True)
     rank_gainers = get_sorted_dict_on_stat(data_difference, 'country_rank', True)
-    ranked_score_gainers = get_sorted_dict_on_stat(data_difference, 'ranked_score', True)
+    ranked_score_gainers = get_sorted_dict_on_stat(
+        data_difference, 'ranked_score', True
+    )
     new_entries = get_new_entries(data_difference)
 
-    # TODO: clean this up, please holy fuck
     fields = create_player_summary_fields(
         pp_gainers=pp_gainers,
         rank_gainers=rank_gainers,
         active_players=active_players,
         ranked_score_gainers=ranked_score_gainers,
         latest_data=latest_mapped_data,
-        comparison_data=comparison_mapped_data
+        comparison_data=comparison_mapped_data,
     )
 
     footer = {
-        'text': 'Updates delivered daily at around midnight. Inaccurate data? Blame Eoneru.',
+        'text': ACTIVITY_FOOTER_TEXT,
     }
 
     embeds: list[Embed] = []
 
     date = latest_date.strftime('%Y-%m-%d')
     date_yesterday = latest_date - timedelta(days=1)
-    dy_frmt = date_yesterday.strftime('%Y-%m-%d')
+    yesterday_string = date_yesterday.strftime('%Y-%m-%d')
 
     main_embed = embed_maker(
-        title='Top 5 activity rankings for {}'.format(latest_date.strftime('%B %d, %Y')),
-        url=f'https://0x4kgi.github.io/ctbph-rank-daily/activity-ranking.html#start:{dy_frmt};end:{date}',
+        title='Top 5 activity rankings for {}'.format(
+            latest_date.strftime('%B %d, %Y')
+        ),
+        url=f'{SITE_BASE_URL}/activity-ranking.html#start:{yesterday_string};end:{date}',
         description=description_maker(
             active_players,
             pp_gainers,
             rank_gainers,
-            ranked_score_gainers
+            ranked_score_gainers,
         ),
         fields=fields,
         footer=footer,
-        color=12517310
+        color=ACTIVITY_EMBED_COLOR,
     )
     embeds.append(main_embed)
 
     if len(new_entries) > 0:
-        desc = []
-        for user_id in new_entries:
-            # /fruits should be temporary
-            user_info = latest_mapped_data[user_id]
-            user_rank = user_info['country_rank']
-            desc.append(f'- [**{new_entries[user_id]['ign']}**](https://osu.ppy.sh/users/{user_id}/fruits) (PH**{user_rank}**)')
-
-        if len(new_entries) > 5:
-            # limit new entries to just 5, to fit within webhook character limit
-            desc = desc[:5]
-            desc.append(f' - *and {len(new_entries) - 5} more!*')
-
-        full_desc = ('There are **{}** new peeps in the Top 1k!\nVisit [the site]('
-                     'https://0x4kgi.github.io/ctbph-rank-daily/) to see where they are. Try looking for ✨\n\nThey '
-                     'are:\n{}').format(
-            len(new_entries),
-            '\n'.join(desc)
-        )
-
-        embeds.append(embed_maker(
-            title='New players in the top 1k',
-            description=full_desc,
-            color=12517310,
-        ))
+        embeds.append(build_new_entries_embed(new_entries, latest_mapped_data))
 
     send_webhook(
         content='``` ```',
         embeds=embeds,
-        username='Top 1k osu!catch PH tracker',
-        avatar_url='https://iili.io/JQmQKKl.png'
+        username=ACTIVITY_WEBHOOK_USERNAME,
+        avatar_url=ACTIVITY_WEBHOOK_AVATAR,
     )
 
 
-def miss_format(miss) -> str:
-    if miss:
-        return f'{miss:,}❌'
-    else:
-        return '**FC 👍**'
+def format_pp_record_line(index: int, score: Score) -> str:
+    # 1. {pp}pp - Player
+    player_info = '***{}.*** **{:,.2f}**pp • **{}**'.format(
+        index + 1,
+        score.pp,
+        score._user.username,
+    )
+
+    # map name and link also mod?
+    map_info = '` ` [**{} [{}]** [{:,.2f}★]]({}) +{}'.format(
+        score.beatmapset.title,
+        score.beatmap.version,
+        score.beatmap.difficulty_rating,
+        score.beatmap.url,
+        score.mods,
+    )
+
+    # score statistics
+    score_statistics = '` ` {} / {:,.2f}% / {} / {:,}x\n'.format(
+        get_emote_for_score_grade(score.rank),
+        score.accuracy * 100,
+        miss_format(score.statistics.count_miss),
+        score.max_combo,
+    )
+
+    return '\n'.join([player_info, map_info, score_statistics])
 
 
 def create_pp_record_list_embed(scores: list[Score]) -> Embed:
-    def formatter(index: int, score: Score) -> str:
-
-        # 1. {pp}pp - Player
-        player_info = '***{}.*** **{:,.2f}**pp • **{}**'.format(
-            index + 1,
-            score.pp,
-            score._user.username,
-        )
-
-        # map name and link also mod?
-        map_info = '` ` [**{} [{}]** [{:,.2f}★]]({}) +{}'.format(
-            score.beatmapset.title,
-            score.beatmap.version,
-            score.beatmap.difficulty_rating,
-            score.beatmap.url,
-            score.mods,
-        )
-
-        # score statistics
-        score_statistics = '` ` {} / {:,.2f}% / {} / {:,}x\n'.format(
-            get_emote_for_score_grade(score.rank),
-            score.accuracy * 100,
-            miss_format(score.statistics.count_miss),
-            score.max_combo,
-        )
-
-        return '\n'.join([player_info, map_info, score_statistics])
-
     description: str = 'Visit the link above for the top 100. Might be incomplete.\n\n'
 
-    for index, scr in enumerate(scores):
-        description += formatter(index, scr)
+    for index, score in enumerate(scores):
+        description += format_pp_record_line(index, score)
 
     date = datetime.now().strftime('%Y-%m-%d')
 
     return embed_maker(
         title=f'Top 5 pp records for {date}',
-        url=f'https://0x4kgi.github.io/ctbph-rank-daily/pp-rankings.html#date:{date}',
+        url=f'{SITE_BASE_URL}/pp-rankings.html#date:{date}',
         description=description,
-        color=12891853,
+        color=PP_EMBED_COLOR,
         footer={
             'text': 'Only ranked submitted plays.'
-        }
+        },
     )
 
 
+def fetch_top_scores(api: Ossapi, mapped_scores, mode: str, top: int) -> list[Score]:
+    fetched_scores: list[Score] = []
+    for score_id, score_data in list(mapped_scores.items())[:top]:
+        if score_data['score_type'] == 'old':
+            score = api.score_mode(mode, score_id)
+        else:
+            score = api.score(score_id)
+
+        fetched_scores.append(score)
+
+    return fetched_scores
+
+
 def send_play_pp_ranking_webhook(
-        api: Ossapi,
-        latest_timestamp: datetime,
-        mode: str,
-        country: str,
-        test: bool,
-        top: int = 5
+    api: Ossapi,
+    latest_timestamp: datetime,
+    mode: str,
+    country: str,
+    test: bool,
+    top: int = PP_RANKING_TOP_COUNT,
 ) -> None:
     # Get the pp scores from file
     raw_scores = get_data_at_date(
@@ -408,16 +497,7 @@ def send_play_pp_ranking_webhook(
 
     # get the top 5 only and convert each to a Score object
     # then append to a Score list
-    scores: list[Score] = []
-    for score_id, score_data in list(mapped_scores.items())[:top]:
-        # TODO: this could be wrapped in a function to have checking if the score
-        #       is correct
-        if score_data['score_type'] == 'old':
-            score = api.score_mode(mode, score_id)
-        else:
-            score = api.score(score_id)
-
-        scores.append(score)
+    scores = fetch_top_scores(api, mapped_scores, mode, top)
 
     # end early if no scores are to be found
     if len(scores) == 0:
@@ -429,7 +509,7 @@ def send_play_pp_ranking_webhook(
     send_webhook(
         username=f'top {top} pp records of the day',
         embeds=[pp_list_embed],
-        avatar_url='https://iili.io/JmEwJhF.png',
+        avatar_url=PP_LIST_WEBHOOK_AVATAR,
     )
 
     # send the highest pp play
@@ -437,7 +517,7 @@ def send_play_pp_ranking_webhook(
     send_webhook(
         username='pp record of the day',
         embeds=[top_pp_embed],
-        avatar_url='https://iili.io/JmEwJhF.png',
+        avatar_url=PP_LIST_WEBHOOK_AVATAR,
     )
 
 
@@ -487,12 +567,19 @@ def main(country: str = 'PH', mode: str = 'fruits', test: bool = False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Send a Discord webhook message from fetched data, requires leaderboard_scrape.py to be ran first!')
+        description='Send a Discord webhook message from fetched data, '
+                    'requires leaderboard_scrape.py to be ran first!'
+    )
 
-    parser.add_argument('--mode', type=str, default='fruits',
-                        help='Define what mode, uses the parameters used on osu site.')
-    parser.add_argument('--country', type=str, default='PH',
-                        help='What country to make a webhook message from. Uses 2 letter country codes.')
+    parser.add_argument(
+        '--mode', type=str, default='fruits',
+        help='Define what mode, uses the parameters used on osu site.',
+    )
+    parser.add_argument(
+        '--country', type=str, default='PH',
+        help='What country to make a webhook message from. '
+             'Uses 2 letter country codes.',
+    )
     parser.add_argument('--test', action='store_true', help='Just do tests')
 
     args = parser.parse_args()
