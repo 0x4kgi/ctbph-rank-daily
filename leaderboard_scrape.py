@@ -358,6 +358,7 @@ def get_pp_plays(
             user_id=user_id,
             score_type='recent',
             limit=active_players[user_id]['play_count'],
+            mode=mode,
         )
         gathered_scores += user_scores
 

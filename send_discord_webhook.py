@@ -56,20 +56,43 @@ PP_EMBED_COLOR = 12891853
 TOP_PLAY_EMBED_COLOR = 16775424
 SITE_BASE_URL = 'https://0x4kgi.github.io/ctbph-rank-daily'
 
+MODE_TO_GAMEMODE = {
+    'osu': GameMode.OSU,
+    'taiko': GameMode.TAIKO,
+    'fruits': GameMode.CATCH,
+    'catch': GameMode.CATCH,
+    'ctb': GameMode.CATCH,
+    'mania': GameMode.MANIA,
+}
+
+
+def resolve_game_mode(mode: str | GameMode) -> GameMode:
+    if isinstance(mode, GameMode):
+        return mode
+
+    resolved_mode = MODE_TO_GAMEMODE.get(str(mode).lower())
+    if resolved_mode is None:
+        logger.warning(f'Unknown mode "{mode}", falling back to CATCH')
+        return GameMode.CATCH
+
+    return resolved_mode
+
 
 def get_recent_plays_of_user(
     api: Ossapi,
     user_id,
     score_type: str = 'best',
     limit=5,
+    mode: str | GameMode = GameMode.CATCH,
 ) -> list[Score]:
-    logger.debug(f'recent plays: {user_id}, {score_type}, {limit}')
+    logger.debug(f'recent plays: {user_id}, {score_type}, {limit}, {mode}')
 
     if limit > SCORE_FETCH_LIMIT_WARNING:
         logger.warning(
             f'some plays might not be gathered for this player ({user_id})'
         )
 
+    resolved_game_mode = resolve_game_mode(mode)
     retries_left = SCORE_FETCH_RETRIES
     while retries_left > 0:
         try:
@@ -77,7 +100,7 @@ def get_recent_plays_of_user(
                 user_id,
                 score_type,
                 limit=limit,
-                mode=GameMode.CATCH,
+                mode=resolved_game_mode,
                 include_fails=False,
             )
             logger.debug(f'# of plays: {len(fetched_scores)}')
@@ -94,8 +117,12 @@ def get_recent_plays_of_user(
     return []
 
 
-def get_user_info(api: Ossapi, user_id) -> User:
-    return api.user(user_id, mode=GameMode.CATCH)
+def get_user_info(
+    api: Ossapi,
+    user_id,
+    mode: str | GameMode = GameMode.CATCH,
+) -> User:
+    return api.user(user_id, mode=resolve_game_mode(mode))
 
 
 def get_emote_for_score_grade(grade: Grade | str) -> str:
@@ -110,8 +137,12 @@ def miss_format(miss) -> str:
     return '**FC 👍**'
 
 
-def create_embed_from_play(api: Ossapi, play_score: Score) -> Embed:
-    play_user = get_user_info(api, play_score.user_id)
+def create_embed_from_play(
+    api: Ossapi,
+    play_score: Score,
+    mode: str | GameMode = GameMode.CATCH,
+) -> Embed:
+    play_user = get_user_info(api, play_score.user_id, mode=mode)
 
     osu_username = play_user.username
     osu_avatar = play_user.avatar_url
@@ -459,10 +490,11 @@ def create_pp_record_list_embed(scores: list[Score]) -> Embed:
 
 
 def fetch_top_scores(api: Ossapi, mapped_scores, mode: str, top: int) -> list[Score]:
+    resolved_game_mode = resolve_game_mode(mode)
     fetched_scores: list[Score] = []
     for score_id, score_data in list(mapped_scores.items())[:top]:
         if score_data['score_type'] == 'old':
-            score = api.score_mode(mode, score_id)
+            score = api.score_mode(resolved_game_mode, score_id)
         else:
             score = api.score(score_id)
 
@@ -513,7 +545,7 @@ def send_play_pp_ranking_webhook(
     )
 
     # send the highest pp play
-    top_pp_embed = create_embed_from_play(api, scores[0])
+    top_pp_embed = create_embed_from_play(api, scores[0], mode=mode)
     send_webhook(
         username='pp record of the day',
         embeds=[top_pp_embed],
