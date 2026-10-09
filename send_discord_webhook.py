@@ -86,7 +86,7 @@ def create_embed_from_play(api: Ossapi, data: Score) -> Embed:
     max_combo = data.max_combo
     rank = get_emote_for_score_grade(data.rank)
     mods = str(data.mods)
-    score_time = data.created_at.strftime('%Y-%m-%dT%H:%m:%S.%fZ')
+    score_time = data.created_at.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
     embed_data = embed_maker(
         title=data.beatmapset.title + f' [{data.beatmap.version}] [{data.beatmap.difficulty_rating:,.2f}★]',
