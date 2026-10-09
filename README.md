@@ -32,3 +32,16 @@ python leaderboard_scrape.py --help
 # a folder named tests/ should appear
 python leaderboard_scrape.py --test
 ```
+
+## Testing (actual `unittest`s)
+
+Locking behavior prior to 26.10.09.
+
+NOTE: No new features will be added, any failure means regression to what I originally intended.
+
+```
+# this assumes venv is already created
+venv/Scripts/activate
+
+python -m unittest discover -s tests -p "test_*.py"
+```
