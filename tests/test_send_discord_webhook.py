@@ -135,15 +135,18 @@ class TestPlayerSummaryFields(unittest.TestCase):
 
 
 class TestCreateEmbedFromPlayTimestamp(unittest.TestCase):
-    def _play(self, created_at):
-        stats = SimpleNamespace(count_miss=0)
+    def _play(self, ended_at):
+        stats = SimpleNamespace(miss=0)
         beatmap = SimpleNamespace(version="Insane", difficulty_rating=5.0,
                                   url="http://example/map")
         beatmapset = SimpleNamespace(title="Song",
                                      covers=SimpleNamespace(cover="http://example/cover"))
         return SimpleNamespace(
-            statistics=stats, max_combo=100, rank="S", mods="HD",
-            pp=99.5, accuracy=0.99, created_at=created_at,
+            statistics=stats, max_combo=100, rank="S",
+            mods=[SimpleNamespace(acronym="HD")],
+            pp=99.5, accuracy=0.99, ended_at=ended_at,
+            legacy_score_id=225335112, legacy_perfect=True,
+            is_perfect_combo=True,
             beatmapset=beatmapset, beatmap=beatmap, user_id=111,
         )
 
@@ -170,8 +173,8 @@ class TestPpRecordListEmbed(unittest.TestCase):
             beatmapset=SimpleNamespace(title="Song"),
             beatmap=SimpleNamespace(version="Insane", difficulty_rating=5.0,
                                     url="http://example/map"),
-            mods="HD", rank="S", accuracy=0.99,
-            statistics=SimpleNamespace(count_miss=0),
+            mods=[SimpleNamespace(acronym="HD")], rank="S", accuracy=0.99,
+            statistics=SimpleNamespace(miss=0),
             max_combo=100,
         )
 
