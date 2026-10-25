@@ -25,6 +25,7 @@ from scripts.ossapi_compat import (
     score_judgement_counts,
     score_mods_text,
     score_reference_id,
+    score_user_name,
 )
 from send_discord_webhook import get_recent_plays_of_user
 
@@ -243,6 +244,7 @@ def dump_to_file(
 def format_score_data_from_list(
     scores: list[Score],
     mode: str | GameMode,
+    user_names: dict[int, str] | None = None,
 ) -> list[MappedScoreData]:
     if len(scores) == 0:
         return []
@@ -259,7 +261,7 @@ def format_score_data_from_list(
             'score_grade': str(score.rank).split('.')[-1],
 
             'user_id': score.user_id,
-            'user_name': score._user.username,
+            'user_name': score_user_name(score, user_names),
 
             'beatmapset_title': score.beatmapset.title,
             'beatmap_version': score.beatmap.version,
@@ -302,7 +304,10 @@ def sort_scores_by_pp(
     return sorted(filtered_scores, key=lambda s: s.pp, reverse=True)[:top]
 
 
-def remove_duplicate_scores(scores: list[Score]) -> list[Score]:
+def remove_duplicate_scores(
+    scores: list[Score],
+    user_names: dict[int, str] | None = None,
+) -> list[Score]:
     best_scores: dict = {}
 
     for score in scores:
@@ -316,7 +321,7 @@ def remove_duplicate_scores(scores: list[Score]) -> list[Score]:
         )
         if dedupe_key not in best_scores or score.pp > best_scores[dedupe_key].pp:
             logger.debug(
-                f'{score._user.username} has a better score on '
+                f'{score_user_name(score, user_names)} has a better score on '
                 f'{score.beatmapset.title} [{score.beatmap.version}] '
                 f'with {score.pp}'
             )
@@ -356,6 +361,13 @@ def get_pp_plays(
         highest_first=True,
     )
 
+    # The rankings already carry every username; don't depend on the
+    # deprecated `user` include of the scores endpoint.
+    user_names = {
+        int(user_id): player_data['ign']
+        for user_id, player_data in active_players.items()
+    }
+
     gathered_scores: list[Score] = []
 
     for user_id in active_players:
@@ -372,9 +384,11 @@ def get_pp_plays(
         )
         gathered_scores += user_scores
 
-    gathered_scores = remove_duplicate_scores(gathered_scores)
+    gathered_scores = remove_duplicate_scores(gathered_scores, user_names)
     gathered_scores = sort_scores_by_pp(gathered_scores, top=PP_RECORDS_TOP_COUNT)
-    formatted_list = format_score_data_from_list(gathered_scores, mode)
+    formatted_list = format_score_data_from_list(
+        gathered_scores, mode, user_names,
+    )
 
     full_data: RawPlayerDataCollection = {
         'file_version': PP_RECORDS_FILE_VERSION,

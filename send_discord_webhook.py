@@ -30,6 +30,7 @@ from scripts.ossapi_compat import (
     score_created_at,
     score_miss_count,
     score_mods_text,
+    score_user_name,
 )
 
 SCORE_FETCH_RETRIES = 3
@@ -454,12 +455,16 @@ def send_activity_ranking_webhook(
     )
 
 
-def format_pp_record_line(index: int, score: Score) -> str:
+def format_pp_record_line(
+    index: int,
+    score: Score,
+    user_names: dict[int, str] | None = None,
+) -> str:
     # 1. {pp}pp - Player
     player_info = '***{}.*** **{:,.2f}**pp • **{}**'.format(
         index + 1,
         score.pp,
-        score._user.username,
+        score_user_name(score, user_names),
     )
 
     # map name and link also mod?
@@ -482,11 +487,14 @@ def format_pp_record_line(index: int, score: Score) -> str:
     return '\n'.join([player_info, map_info, score_statistics])
 
 
-def create_pp_record_list_embed(scores: list[Score]) -> Embed:
+def create_pp_record_list_embed(
+    scores: list[Score],
+    user_names: dict[int, str] | None = None,
+) -> Embed:
     description: str = 'Visit the link above for the top 100. Might be incomplete.\n\n'
 
     for index, score in enumerate(scores):
-        description += format_pp_record_line(index, score)
+        description += format_pp_record_line(index, score, user_names)
 
     date = datetime.now().strftime('%Y-%m-%d')
 
@@ -539,6 +547,13 @@ def send_play_pp_ranking_webhook(
     # Map the scores to a dict
     mapped_scores: MappedScoreDataCollection = map_player_data(raw_scores)
 
+    # Prefer names from the stored rows (the score endpoint's deprecated
+    # `user` include is not something to rely on).
+    user_names = {
+        score_data['user_id']: score_data['user_name']
+        for score_data in mapped_scores.values()
+    }
+
     # get the top 5 only and convert each to a Score object
     # then append to a Score list
     scores = fetch_top_scores(api, mapped_scores, mode, top)
@@ -549,7 +564,7 @@ def send_play_pp_ranking_webhook(
         return
 
     # make the list of the top 10 as a separate webhook
-    pp_list_embed = create_pp_record_list_embed(scores)
+    pp_list_embed = create_pp_record_list_embed(scores, user_names)
     send_webhook(
         username=f'top {top} pp records of the day',
         embeds=[pp_list_embed],

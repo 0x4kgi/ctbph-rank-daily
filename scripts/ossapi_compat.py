@@ -131,6 +131,28 @@ def score_miss_count(score) -> int:
     return _count(getattr(score.statistics, 'miss', None))
 
 
+def score_user_name(
+    score,
+    user_names: dict[int, str] | None = None,
+) -> str:
+    """Username for a score, without relying on the deprecated user include.
+
+    osu! deprecated ``user`` in Get User Scores responses. Callers which
+    already know the name (rankings file, stored pp-records row) pass a
+    ``user_id -> username`` map so this keeps working if it goes away.
+    """
+    if user_names is not None:
+        user_name = user_names.get(score.user_id)
+        if user_name is not None:
+            return user_name
+
+    user = getattr(score, '_user', None)
+    if user is not None:
+        return user.username
+
+    return f'user {score.user_id}'
+
+
 def score_judgement_counts(
     score,
     mode: str | GameMode,
