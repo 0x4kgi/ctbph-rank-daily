@@ -11,6 +11,7 @@ def main():
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
 
+    # Only User is read here, whose shape does not depend on x-api-version.
     api = Ossapi(client_id, client_secret)
 
     user = api.user('eoneru', key=UserLookupKey.USERNAME)

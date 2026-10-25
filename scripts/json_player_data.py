@@ -118,7 +118,7 @@ class RawPlayerDataCollection(TypedDict):
     mode: str
     country: str
     pages: int
-    key_mapping: list[str]
+    map: list[str]
     key: Optional[str]
     data: dict[str, list[int | str | float]]
     ```

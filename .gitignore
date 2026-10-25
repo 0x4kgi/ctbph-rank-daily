@@ -1,5 +1,11 @@
 venv
 venv_*/
 __pycache__
-tests/
+tests/docs/
+tests/old/
+tests/*.html
+tests/*.json
+tests/*.log
 .env
+
+/.tmp*
