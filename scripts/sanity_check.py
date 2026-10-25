@@ -3,6 +3,9 @@ import requests
 from dotenv import load_dotenv
 from ossapi import Ossapi, UserLookupKey
 
+# Keep the legacy model shapes, matching leaderboard_scrape.OSU_API_VERSION.
+OSU_API_VERSION = 0
+
 
 def main():
     load_dotenv()
@@ -11,7 +14,7 @@ def main():
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
 
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     user = api.user('eoneru', key=UserLookupKey.USERNAME)
 

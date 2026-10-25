@@ -27,6 +27,11 @@ PAGE_FETCH_RETRY_DELAY = 3
 PP_RECORDS_TOP_COUNT = 100
 OLD_SCORE_ID_LENGTH_THRESHOLD = 10
 
+# ossapi 5.x defaults to api_version=20241024, which returns the modern score
+# models (ended_at, legacy_perfect, list[NonLegacyMod]). Everything below reads
+# and stores the legacy score shape, so pin it to the pre-20220705 models.
+OSU_API_VERSION = 0
+
 PLAYER_VALUE_MAPPING = [
     'country_rank',
     'global_rank',
@@ -121,7 +126,7 @@ def get_page_rankings(
     client_secret = os.getenv('OSU_CLIENT_SECRET')
 
     # noinspection PyTypeChecker
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     retries_left = PAGE_FETCH_RETRIES
     while retries_left > 0:
@@ -323,7 +328,7 @@ def get_pp_plays(
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
     # noinspection PyTypeChecker
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     processed_data = get_comparison_and_mapped_data(
         base_date=datetime.now(),

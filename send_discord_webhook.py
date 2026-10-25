@@ -33,6 +33,9 @@ SUMMARY_FIELD_LIMIT = 5
 NEW_ENTRIES_DISPLAY_LIMIT = 5
 PP_RANKING_TOP_COUNT = 5
 
+# Keep the legacy score models, matching leaderboard_scrape.OSU_API_VERSION.
+OSU_API_VERSION = 0
+
 GRADE_EMOTES = {
     'SSH': '<:rankingXH:1247443556881399848>',
     'SS': '<:rankingX:1247443458596274278>',
@@ -557,7 +560,7 @@ def main(country: str = 'PH', mode: str = 'fruits', test: bool = False):
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
     # noinspection PyTypeChecker
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     latest_date = datetime.now()
     processed_data = get_comparison_and_mapped_data(
