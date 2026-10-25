@@ -7,3 +7,5 @@ tests/*.html
 tests/*.json
 tests/*.log
 .env
+
+/.tmp*
