@@ -17,6 +17,15 @@ from scripts.json_player_data import (
     get_sorted_dict_on_stat,
 )
 from scripts.logging_config import setup_logging, logger
+from scripts.ossapi_compat import (
+    OSU_API_VERSION,
+    has_legacy_score_id,
+    score_created_at,
+    score_full_combo,
+    score_judgement_counts,
+    score_mods_text,
+    score_reference_id,
+)
 from send_discord_webhook import get_recent_plays_of_user
 
 MAX_RANKING_PAGES = 200
@@ -25,7 +34,6 @@ PP_RECORDS_FILE_VERSION = 1.011
 PAGE_FETCH_RETRIES = 3
 PAGE_FETCH_RETRY_DELAY = 3
 PP_RECORDS_TOP_COUNT = 100
-OLD_SCORE_ID_LENGTH_THRESHOLD = 10
 
 PLAYER_VALUE_MAPPING = [
     'country_rank',
@@ -121,7 +129,7 @@ def get_page_rankings(
     client_secret = os.getenv('OSU_CLIENT_SECRET')
 
     # noinspection PyTypeChecker
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     retries_left = PAGE_FETCH_RETRIES
     while retries_left > 0:
@@ -232,19 +240,21 @@ def dump_to_file(
     return output_file
 
 
-def format_score_data_from_list(scores: list[Score]) -> list[MappedScoreData]:
+def format_score_data_from_list(
+    scores: list[Score],
+    mode: str | GameMode,
+) -> list[MappedScoreData]:
     if len(scores) == 0:
         return []
 
     mapped_scores = []
 
     for score in scores:
+        counts = score_judgement_counts(score, mode)
         mapped_scores.append({
-            'score_id': score.id,
-            'score_type': (
-                'old' if len(str(score.id)) < OLD_SCORE_ID_LENGTH_THRESHOLD else 'new'
-            ),
-            'score_mods': str(score.mods),
+            'score_id': score_reference_id(score),
+            'score_type': 'old' if has_legacy_score_id(score) else 'new',
+            'score_mods': score_mods_text(score),
             'score_pp': score.pp,
             'score_grade': str(score.rank).split('.')[-1],
 
@@ -257,13 +267,13 @@ def format_score_data_from_list(scores: list[Score]) -> list[MappedScoreData]:
             'beatmapset_id': score.beatmapset.id,
             'beatmap_difficulty': score.beatmap.difficulty_rating,
 
-            'full_combo': score.perfect,
+            'full_combo': score_full_combo(score),
             'max_combo': score.max_combo,
-            'count_300': score.statistics.count_300,
-            'count_100': score.statistics.count_100,
-            'count_50': score.statistics.count_50,
-            'count_droplet_miss': score.statistics.count_katu,
-            'count_miss': score.statistics.count_miss,
+            'count_300': counts.get('count_300'),
+            'count_100': counts.get('count_100'),
+            'count_50': counts.get('count_50'),
+            'count_droplet_miss': counts.get('count_katu'),
+            'count_miss': counts.get('count_miss'),
             'accuracy': score.accuracy,
         })
 
@@ -280,7 +290,7 @@ def sort_scores_by_pp(
         if score.pp is None:
             return False
 
-        score_timestamp = score.created_at.timestamp()
+        score_timestamp = score_created_at(score).timestamp()
         if score_timestamp < min_date:
             return False
         if score_timestamp > max_date:
@@ -300,7 +310,7 @@ def remove_duplicate_scores(scores: list[Score]) -> list[Score]:
             continue
 
         dedupe_key = (
-            score._user.id,
+            score.user_id,
             score.beatmap.id,
             score.beatmapset.id,
         )
@@ -323,7 +333,7 @@ def get_pp_plays(
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
     # noinspection PyTypeChecker
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     processed_data = get_comparison_and_mapped_data(
         base_date=datetime.now(),
@@ -364,7 +374,7 @@ def get_pp_plays(
 
     gathered_scores = remove_duplicate_scores(gathered_scores)
     gathered_scores = sort_scores_by_pp(gathered_scores, top=PP_RECORDS_TOP_COUNT)
-    formatted_list = format_score_data_from_list(gathered_scores)
+    formatted_list = format_score_data_from_list(gathered_scores, mode)
 
     full_data: RawPlayerDataCollection = {
         'file_version': PP_RECORDS_FILE_VERSION,

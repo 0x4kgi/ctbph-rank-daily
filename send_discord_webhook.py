@@ -25,6 +25,12 @@ from scripts.json_player_data import (
     map_player_data,
 )
 from scripts.logging_config import setup_logging, logger
+from scripts.ossapi_compat import (
+    OSU_API_VERSION,
+    score_created_at,
+    score_miss_count,
+    score_mods_text,
+)
 
 SCORE_FETCH_RETRIES = 3
 SCORE_FETCH_RETRY_DELAY = 3
@@ -105,6 +111,11 @@ def get_recent_plays_of_user(
             )
             logger.debug(f'# of plays: {len(fetched_scores)}')
             return fetched_scores
+        except (TypeError, AttributeError, KeyError) as parse_error:
+            raise RuntimeError(
+                'could not parse score models from the osu! API; ossapi '
+                'model shapes may have changed'
+            ) from parse_error
         except Exception as fetch_error:
             logger.error(
                 f'Error on getting data for {user_id}. '
@@ -150,10 +161,11 @@ def create_embed_from_play(
     user_pp = round(play_user.statistics.pp, 0)
     ph_rank = play_user.statistics.country_rank
 
-    score_statistics = play_score.statistics
     rank_emote = get_emote_for_score_grade(play_score.rank)
-    mods_text = str(play_score.mods)
-    score_time = play_score.created_at.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    mods_text = score_mods_text(play_score)
+    score_time = score_created_at(play_score).strftime(
+        '%Y-%m-%dT%H:%M:%S.%fZ'
+    )
 
     return embed_maker(
         title=play_score.beatmapset.title + (
@@ -161,7 +173,7 @@ def create_embed_from_play(
             f'[{play_score.beatmap.difficulty_rating:,.2f}★]'
         ),
         description=(
-            f'**{rank_emote}** • {miss_format(score_statistics.count_miss)} '
+            f'**{rank_emote}** • {miss_format(score_miss_count(play_score))} '
             f'• {play_score.max_combo}x'
         ),
         fields=[
@@ -456,14 +468,14 @@ def format_pp_record_line(index: int, score: Score) -> str:
         score.beatmap.version,
         score.beatmap.difficulty_rating,
         score.beatmap.url,
-        score.mods,
+        score_mods_text(score),
     )
 
     # score statistics
     score_statistics = '` ` {} / {:,.2f}% / {} / {:,}x\n'.format(
         get_emote_for_score_grade(score.rank),
         score.accuracy * 100,
-        miss_format(score.statistics.count_miss),
+        miss_format(score_miss_count(score)),
         score.max_combo,
     )
 
@@ -557,7 +569,7 @@ def main(country: str = 'PH', mode: str = 'fruits', test: bool = False):
     client_id = os.getenv('OSU_CLIENT_ID')
     client_secret = os.getenv('OSU_CLIENT_SECRET')
     # noinspection PyTypeChecker
-    api = Ossapi(client_id, client_secret)
+    api = Ossapi(client_id, client_secret, api_version=OSU_API_VERSION)
 
     latest_date = datetime.now()
     processed_data = get_comparison_and_mapped_data(

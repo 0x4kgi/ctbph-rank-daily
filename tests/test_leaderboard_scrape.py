@@ -8,6 +8,7 @@ and can only be characterized after extraction (see notes below).
 import json
 import os
 import unittest
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -27,21 +28,23 @@ def _ranking_row(**over):
 
 
 def _score(**over):
-    stats = SimpleNamespace(count_300=10, count_100=2, count_50=1,
-                            count_katu=3, count_miss=0)
+    stats = SimpleNamespace(great=10, large_tick_hit=2, small_tick_hit=1,
+                            small_tick_miss=3, miss=0)
     beatmap = SimpleNamespace(id=1, version="Insane",
                               difficulty_rating=5.5)
     beatmapset = SimpleNamespace(id=2, title="Song")
     user = SimpleNamespace(username="alice")
     base = dict(
-        id=123456789, mods="HD", pp=100.0, rank="S",
-        user_id=111, _user=user, beatmapset=beatmapset, beatmap=beatmap,
-        perfect=True, max_combo=500, statistics=stats, accuracy=0.98,
+        id=123456789, legacy_score_id=225335112,
+        mods=[SimpleNamespace(acronym="HD")],
+        pp=100.0, rank="S", user_id=111, _user=user,
+        beatmapset=beatmapset, beatmap=beatmap,
+        legacy_perfect=True, is_perfect_combo=True,
+        max_combo=500, statistics=stats, accuracy=0.98,
+        ended_at=datetime(2026, 10, 8, 12, 0, 0, tzinfo=timezone.utc),
     )
     base.update(over)
-    ns = SimpleNamespace(**base)
-    # allow attribute spelled as _user (SimpleNamespace handles it)
-    return ns
+    return SimpleNamespace(**base)
 
 
 class TestEncodeToMap(unittest.TestCase):
@@ -161,16 +164,25 @@ class TestDumpToFile(unittest.TestCase):
 
 class TestFormatScoreData(unittest.TestCase):
     def test_empty_in_empty_out(self):
-        self.assertEqual(lb.format_score_data_from_list([]), [])
+        self.assertEqual(
+            lb.format_score_data_from_list([], mode="fruits"), [],
+        )
 
-    def test_short_id_is_old_long_is_new(self):
+    def test_legacy_score_id_marks_old_score(self):
         out = lb.format_score_data_from_list(
-            [_score(id=123), _score(id=12345678901)])
+            [_score(legacy_score_id=225335112, id=7653394134),
+             _score(legacy_score_id=None, id=7649769528)],
+            mode="fruits",
+        )
         self.assertEqual(out[0]["score_type"], "old")
+        self.assertEqual(out[0]["score_id"], 225335112)
         self.assertEqual(out[1]["score_type"], "new")
+        self.assertEqual(out[1]["score_id"], 7649769528)
 
     def test_grade_split_and_fields(self):
-        out = lb.format_score_data_from_list([_score(rank="Grade.S")])
+        out = lb.format_score_data_from_list(
+            [_score(rank="Grade.S")], mode="fruits",
+        )
         self.assertEqual(out[0]["score_grade"], "S")
         self.assertEqual(out[0]["user_name"], "alice")
         self.assertEqual(out[0]["beatmapset_title"], "Song")
